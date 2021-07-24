@@ -1,0 +1,61 @@
+<html>
+<head>
+    <title>bubbles</title>
+    <style>
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            background: #f8f8f8;
+            width: 800px;
+            height: 50px;
+        }
+
+        .bubbles {
+            font-family: sans-serif;
+        }
+
+        .bubbles-filter, .bubbles-selector {
+            margin: 4px 0;
+        }
+
+        .bubbles-filter, .bubbles-input {
+            margin: 4px 0;
+        }
+
+        .bubbles-filter, .bubbles-button {
+            margin: 4px 0;
+        }
+
+        .bubbles-filter {
+            width: 100%;
+            height: 100%;
+        }
+
+        .bubbles-filter-widget {
+            display: flex;
+            flex-direction: column;
+            width: 150px;
+            background: #f8f8f8;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .table {
+            margin: 150px;
+        }
+
+        .bubbles-table-column {
+            text-align: left;
+        }
+    </style>
+    <link href="../dist/bubbles.css" />
+</head>
+<body>
+    <script src="../dist/bubbles.umd.js"></script>
+    <div class="filter-bar" id="filter-bar"></div>
+    <div class="table" id="table"></div>
+    <!-- load the main data file as a global -->
+    <script src="data.js"></script>
+    <script src="filter.js"></script>
+</body>
+</html>

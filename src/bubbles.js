@@ -1,6 +1,6 @@
 import {BubbleView} from './bubble_view';
 import {applyTransforms, emptyTransforms} from './data/common';
-import './bubbles.css';
+import './global.css';
 
 export function Bubbles(data) {
     this._data = data;

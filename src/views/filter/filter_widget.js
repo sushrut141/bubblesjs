@@ -1,5 +1,5 @@
 import {isDefined, isUndefined, getFieldValues} from '../../data/common';
-import {createElem} from '../common';
+import {createDropdown, createElem} from '../common';
 import {TYPE_COMPARATOR_MAP} from './common'
 
 /**
@@ -62,13 +62,23 @@ FilterWidget.prototype._render = function () {
         });
     }
     if (isUndefined(this._field)) {
-        this._createFieldSelector();
+        // this._createFieldSelector();
+        this._fieldSelector$ = createDropdown({
+            name: 'Field',
+            fields: this._fields,
+            onSelect: (item) => {
+                this._field = item;
+                this._render();
+            },
+        });
+        this._fieldSelector$.click();
         this._mount$.appendChild(this._fieldSelector$);
         return;
     }
     if (this._mount$.contains(this._fieldSelector$)) {
         this._mount$.removeChild(this._fieldSelector$);
     }
+    this._mount$.classList.add('bubbles-filter-widget--selected');
     this._createFieldHeader();
     this._createComparatorSelector();
     this._createValueBox();
@@ -101,23 +111,15 @@ FilterWidget.prototype._createFieldSelector = function () {
 
 FilterWidget.prototype._createComparatorSelector = function () {
     if (isDefined(this._field) && isUndefined(this._comparatorSelector$)) {
-        const comparatorSelectorElem = createElem('select', {
-            class: 'bubbles-filter-comparator bubbles-selector'
-        });
-        const onComparatorSelect = (evt) => {
-            evt.stopPropagation();
-            this._comparator = evt.target.value;
-        };
         const fieldType = this._viewConfig.types[this._field];
         const comparators = TYPE_COMPARATOR_MAP[fieldType];
-        for (let i = 0; i < comparators.length; i += 1) {
-            const comparatorElem = createElem('option', {
-                class: 'bubbles-selector-option',     
-            }, comparators[i]);
-            comparatorSelectorElem.appendChild(comparatorElem);
-        }
-        comparatorSelectorElem.addEventListener('change', onComparatorSelect);
-        this._comparatorSelector$ = comparatorSelectorElem;
+        this._comparatorSelector$ = createDropdown({
+            name: comparators[0],
+            fields: comparators,
+            onSelect: (comparator) => {
+                this._comparator = comparator;
+            },
+        });
     }
 };
 
@@ -183,5 +185,7 @@ FilterWidget.prototype._createFieldHeader = function () {
     if (isDefined(this._fieldHeader$)) {
         this._mount$.removeChild(this._fieldHeader$);
     }
-    this._fieldHeader$ = createElem('h2', {}, this._field);
+    this._fieldHeader$ = createElem('div', {
+        class: 'bubbles-filter-widget__header',
+    }, this._field);
 };

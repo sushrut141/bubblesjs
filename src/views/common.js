@@ -18,6 +18,43 @@ export function createElem(tag, attributes, innerText) {
 }
 
 /**
+ * Creates a dropdown that can be used to select a value from a list.
+ * 
+ * @param {string} params.name Name to show in default state.
+ * @param {Array<string>} params.fields List of fields to render in dropdown.
+ * @param {Function} params.onSelect Callback to execute with selected item.
+ * 
+ */
+export function createDropdown(params) {
+    const dropdown$ = createElem('div', {
+        class: 'bubbles-dropdown'
+    }, params.name);
+    const onClick = (evt) => {
+        if (!dropdown$.classList.contains('bubbles-dropdown--expanded')) {
+            dropdown$.innerText = '';
+            const listWrapper$ = createElem('div', {
+                class: 'bubbles-dropdown-list',
+            });
+            for (let i = 0; i < params.fields.length; i += 1) {
+                const item$ = createElem('div', {
+                    class: 'bubbles-dropdown-item',
+                    'data-idx': i,
+                }, params.fields[i]);
+                listWrapper$.appendChild(item$);
+            }
+            dropdown$.classList.add('bubbles-dropdown--expanded');
+            dropdown$.appendChild(listWrapper$);
+        } else {
+            dropdown$.innerText = evt.target.innerText;
+            dropdown$.classList.remove('bubbles-dropdown--expanded');
+            params.onSelect(evt.target.innerText, evt.target.getAttribute('data-idx'));
+        }
+    };
+    dropdown$.addEventListener('click', onClick);
+    return dropdown$;
+}
+
+/**
  * Gets the mount point from the bubble view configuration.
  * 
  * @returns {HTMLElement} DOM node to mount the bubble visualization at.

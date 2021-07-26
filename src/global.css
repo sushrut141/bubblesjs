@@ -1,0 +1,37 @@
+.bubbles {
+    font-family: sans-serif;
+}
+
+.bubbles-selector {
+    margin: 4px 0;
+}
+
+.bubbles-dropdown.bubbles-dropdown--expanded {
+    position: relative;
+    box-shadow: none;
+}
+
+.bubbles-dropdown {
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.bubbles-dropdown-list {
+    position: absolute;
+    max-height: 90px;
+    overflow: auto;
+    background: white;
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+.bubbles-dropdown-item {
+    cursor: pointer;
+    padding: 8px;
+}
+
+.bubbles-dropdown-item:hover {
+    background: #f8f8f8;
+}

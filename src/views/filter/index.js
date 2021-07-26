@@ -2,6 +2,7 @@ import {isDefined, isUndefined} from '../../data/common';
 import {createElem, getMountPoint} from '../common';
 import { COMPARATOR_PREDICATE_MAP } from './common';
 import {FilterWidget} from './filter_widget';
+import './filter.css';
 
 /**
  * Renders a FilteBar that allows filtering data based on fields present in the data.
@@ -17,6 +18,7 @@ export function FilterView(params) {
     this._elem$ = undefined;
     this._filterWidget = undefined;
     this._filters = [];
+    this._filters$ = [];
     this._render();
 }
 
@@ -46,6 +48,7 @@ FilterView.prototype._render = function () {
                 onConfirm: (appliedFilter) => {
                     if (isDefined(appliedFilter)) {
                         this._filters.push(appliedFilter);
+                        this._createFilterPills();
                         this._updateParentBubble();
                     }
                     elem$.removeChild(this._filterWidget.getRootNode());
@@ -83,5 +86,33 @@ FilterView.prototype._updateParentBubble = function () {
     for (let i = 0; i < this._bubbleView._children.length; i += 1) {
         const childBubble = this._bubbleView._children[i];
         childBubble.update(data);
+    }
+};
+
+FilterView.prototype._createFilterPills = function () {
+    for (let i = this._filters$.length; i < this._filters.length; i += 1) {
+        const onClick = (evt) => {
+            evt.stopPropagation();
+            const filterToRemove$ = this._filters$[i];
+            this._filters = this._filters.filter((_, idx) => idx !== i);
+            this._filters$ = this._filters$.filter((_, idx) => idx !== i);
+            this._elem$.removeChild(filterToRemove$);
+            this._updateParentBubble();
+        };
+        const filter = this._filters[i];
+        const filter$ = createElem('div', {
+            class: 'bubbles-filter-pill',
+        });
+        const fields$ = createElem('div', {
+            class: 'bubbles-filter-pill__label'
+        }, `${filter.field} ${filter.comparator} ${filter.value}`);
+        const close$ = createElem('button', {
+            class: 'bubbles-filter-pill__close'
+        }, 'x');
+        close$.addEventListener('click', onClick);
+        filter$.appendChild(fields$);
+        filter$.appendChild(close$);
+        this._filters$.push(filter$);
+        this._elem$.appendChild(filter$);
     }
 };

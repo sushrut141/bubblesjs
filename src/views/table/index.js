@@ -1,5 +1,6 @@
 import { isDefined } from "../../data/common";
 import { createElem, getMountPoint } from "../common";
+import './table.css';
 
 /**
  * Render a Table Visualization that shows the supplied columns.

@@ -1,3 +1,5 @@
+import { isDefined } from "../data/common";
+
 /**
  * Creates a DOM node based on the supplied parameters.
  * 
@@ -23,12 +25,12 @@ export function createElem(tag, attributes, innerText) {
  * @param {string} params.name Name to show in default state.
  * @param {Array<string>} params.fields List of fields to render in dropdown.
  * @param {Function} params.onSelect Callback to execute with selected item.
- * 
+ * @param {string} params.value Currently selected field in drop down.
  */
 export function createDropdown(params) {
     const dropdown$ = createElem('div', {
-        class: 'bubbles-dropdown'
-    }, params.name);
+        class: 'bubbles-dropdown',
+    }, params.value || params.name);
     const onClick = (evt) => {
         if (!dropdown$.classList.contains('bubbles-dropdown--expanded')) {
             dropdown$.innerText = '';
@@ -36,8 +38,12 @@ export function createDropdown(params) {
                 class: 'bubbles-dropdown-list',
             });
             for (let i = 0; i < params.fields.length; i += 1) {
+                let className = 'bubbles-dropdown-item';
+                if (params.value === params.fields[i]) {
+                    className += ' bubbles-dropdown-item--selected';
+                }
                 const item$ = createElem('div', {
-                    class: 'bubbles-dropdown-item',
+                    class: className,
                     'data-idx': i,
                 }, params.fields[i]);
                 listWrapper$.appendChild(item$);

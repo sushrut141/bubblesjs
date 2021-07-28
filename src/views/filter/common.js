@@ -1,3 +1,5 @@
+import { isDefined } from "../../data/common";
+
 export const TYPE_COMPARATOR_MAP = {
     'string': ['contains', 'does not contain', 'equals', 'does not equal', 'is empty', 'is not empty'],
     'number': ['greater than', 'less than', 'equal to'],

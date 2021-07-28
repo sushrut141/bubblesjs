@@ -89,33 +89,15 @@ FilterWidget.prototype._render = function () {
     this._mount$.appendChild(this._actionsContainer$);
 };
 
-FilterWidget.prototype._createFieldSelector = function () {
-    const fieldSelector$ = createElem('select', {
-        class: 'bubbles-filter-field bubbles-selector'
-    });
-    const onFieldSelect = (evt) => {
-        evt.stopPropagation();
-        this._field = evt.target.value;
-        this._render();
-    };
-    for (let i = 0; i < this._fields.length; i += 1) {
-        const fieldOption$ = createElem('option', {
-            class: 'bubbles-selector-option',
-            value: this._fields[i],
-        }, this._fields[i]);
-        fieldSelector$.appendChild(fieldOption$);
-    }
-    fieldSelector$.addEventListener('change', onFieldSelect, true);
-    this._fieldSelector$ = fieldSelector$;
-};
-
 FilterWidget.prototype._createComparatorSelector = function () {
     if (isDefined(this._field) && isUndefined(this._comparatorSelector$)) {
         const fieldType = this._viewConfig.types[this._field];
         const comparators = TYPE_COMPARATOR_MAP[fieldType];
+        this._comparator = comparators[0];
         this._comparatorSelector$ = createDropdown({
-            name: comparators[0],
+            name: this._comparator,
             fields: comparators,
+            value: this._value,
             onSelect: (comparator) => {
                 this._comparator = comparator;
             },
@@ -137,21 +119,22 @@ FilterWidget.prototype._createValueBox = function () {
             class: 'bubbles-filter-value bubbles-input bubbles-input--number',
             type: 'number',
         });
+        this._valueSelector$.value = this._value;
+        this._valueSelector$.addEventListener('change', onValueChange);
     } else {
-        const valueSelector$ = createElem('select', {
-            class: 'bubbles-filter-value bubbles-selector',
-        });
         const values = getFieldValues(this._data, this._field);
-        for (let i = 0; i < values.length; i += 1) {
-            const valueOption$ = createElem('option', {
-                class: 'bubbles-selector-option',
-            }, values[i]);
-            valueSelector$.appendChild(valueOption$);
-        }
+        this._value = values.length > 0 ? values[0] : '';
+        const valueSelector$ = createDropdown({
+            name: this._value,
+            fields: values,
+            value: this._value,
+            onSelect: (value) => {
+                this._value = fieldType === 'string' ? value : parseFloat(value);
+                this._render();
+            },
+        });
         this._valueSelector$ = valueSelector$;
     }
-    this._valueSelector$.value = this._value;
-    this._valueSelector$.addEventListener('change', onValueChange);
 };
 
 FilterWidget.prototype._createActionButtons = function () {

@@ -93,21 +93,34 @@ FilterView.prototype._createFilterPills = function () {
     for (let i = this._filters$.length; i < this._filters.length; i += 1) {
         const onClick = (evt) => {
             evt.stopPropagation();
-            const filterToRemove$ = this._filters$[i];
-            this._filters = this._filters.filter((_, idx) => idx !== i);
-            this._filters$ = this._filters$.filter((_, idx) => idx !== i);
+            let filterToRemove$;
+            const idxToRemove  = evt.target.getAttribute('data-idx');
+            const newFilters = [];
+            const newFilters$ = [];
+            for (let j = 0; j < this._filters.length; j += 1) {
+                if (this._filters$[j].getAttribute('data-idx') !== idxToRemove) {
+                    newFilters.push(this._filters[j]);
+                    newFilters$.push(this._filters$[j]);
+                } else {
+                    filterToRemove$ = this._filters$[j];
+                }
+            }
+            this._filters = newFilters;
+            this._filters$ = newFilters$;
             this._elem$.removeChild(filterToRemove$);
             this._updateParentBubble();
         };
         const filter = this._filters[i];
         const filter$ = createElem('div', {
             class: 'bubbles-filter-pill',
+            'data-idx': i,
         });
         const fields$ = createElem('div', {
             class: 'bubbles-filter-pill__label'
         }, `${filter.field} ${filter.comparator} ${filter.value}`);
         const close$ = createElem('button', {
-            class: 'bubbles-filter-pill__close'
+            class: 'bubbles-filter-pill__close',
+            'data-idx': i,
         }, 'x');
         close$.addEventListener('click', onClick);
         filter$.appendChild(fields$);

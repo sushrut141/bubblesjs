@@ -1,7 +1,17 @@
 .bubbles-table {
     width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+}
+
+.bubbles-table-row {
+    height: 48px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0, 0, 0, 0.12);
+    border-bottom-style: solid;
 }
 
 .bubbles-table-column {
     text-align: left;
+    padding-left: 24px;
 }

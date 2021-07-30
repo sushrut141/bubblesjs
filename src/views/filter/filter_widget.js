@@ -123,7 +123,9 @@ FilterWidget.prototype._createValueBox = function () {
         this._valueSelector$.addEventListener('change', onValueChange);
     } else {
         const values = getFieldValues(this._data, this._field);
-        this._value = values.length > 0 ? values[0] : '';
+        if (isUndefined(this._value)) {
+            this._value = values.length > 0 ? values[0] : '';
+        }
         const valueSelector$ = createDropdown({
             name: this._value,
             fields: values,

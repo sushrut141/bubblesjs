@@ -13,6 +13,7 @@ import './table.css';
 export function TableView(params) {
     this._data = params.data;
     this._viewConfig = params.viewConfig;
+    this._rowCount = this._viewConfig.rowCount || 10;
     this._columns = Object.keys(this._viewConfig.headers);
     this._page = 0;
     this._elem$ = undefined;
@@ -65,7 +66,7 @@ TableView.prototype._createTableHeaders = function () {
 };
 
 TableView.prototype._createTableBody = function () {
-    const total = this._viewConfig.rowCount || 10;
+    const total = this._rowCount;
     const start = (this._page * total);
     const end = Math.min(start + total, this._data.length);
     const body$ = createElem('tbody', {
@@ -85,5 +86,12 @@ TableView.prototype._createTableBody = function () {
         body$.appendChild(row$);
     }
     this._body$ = body$;
+};
+
+TableView.prototype._createPaginator = function () {
+    const paginator$ = createElem('div', {
+        class: 'bubbles-table-paginator',
+    });
+
 };
 

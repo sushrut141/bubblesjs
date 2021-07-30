@@ -21,11 +21,12 @@
         }
 
         .table {
-            margin: 150px;
+            margin-top: 50px;
+            width: 800px;
         }
 
-        .bubbles-table {
-            width: 500px;
+        .dashboard {
+            margin: 100px;
         }
 
     </style>
@@ -33,8 +34,10 @@
 </head>
 <body>
     <script src="../dist/bubbles.umd.js"></script>
-    <div class="filter-bar" id="filter-bar"></div>
-    <div class="table" id="table"></div>
+    <div class="dashboard">
+        <div class="filter-bar" id="filter-bar"></div>
+        <div class="table" id="table"></div>
+    </div>
     <!-- load the main data file as a global -->
     <script src="data.js"></script>
     <script src="filter.js"></script>

@@ -1,17 +1,59 @@
-.bubbles-table {
+.bubbles.bubbles-table {
     width: 100%;
     border-collapse: collapse;
-    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0px 1px rgba(0, 0, 0, 0.6);
+    border-radius: 4px;
 }
 
-.bubbles-table-row {
+.bubbles-table .bubbles-table-header {
+    border-bottom-width: 1px;
+    border-bottom-color: rgba(0, 0, 0, 0.12);
+    border-bottom-style: solid;
+}
+
+.bubbles-table .bubbles-table-row {
     height: 48px;
     border-bottom-width: 1px;
     border-bottom-color: rgba(0, 0, 0, 0.12);
     border-bottom-style: solid;
 }
 
-.bubbles-table-column {
+.bubbles-table .bubbles-table-row:last-child {
+    border-bottom: unset;
+}
+
+.bubbles-table .bubbles-table-column {
     text-align: left;
     padding-left: 24px;
+}
+
+.bubbles-table-paginator {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 8px 24px;
+    box-shadow: 0 0px 1px rgba(0, 0, 0, 0.6);
+    background: white;
+}
+
+.bubbles-table-paginator .bubbles-table-paginator__range {
+    opacity: 0.6;
+    margin-right: 16px;
+}
+
+.bubbles-table-paginator .bubbles-table-paginator__pagesize {
+    min-width: 40px;
+    margin-right: 16px;
+}
+
+.bubbles-table-paginator .bubbles-table-paginator__arrow {
+    cursor: pointer;
+    border-radius: 50%;
+    border: unset;
+    padding: 8px 12px;
+    margin-right: 8px;
+}
+
+.bubbles-table-paginator__arrow:hover {
+    background: rgba(0, 0, 0, 0.3);
 }

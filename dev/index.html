@@ -2,22 +2,18 @@
 <head>
     <title>bubbles</title>
     <style>
+        body {
+            background: #f8f8f8;
+        }
+        
         .filter-bar {
             display: flex;
             align-items: center;
             width: 800px;
         }
 
-        .bubbles-filter, .bubbles-selector {
-            margin: 4px 0;
-        }
-
-        .bubbles-filter, .bubbles-input {
-            margin: 4px 0;
-        }
-
-        .bubbles-filter, .bubbles-button {
-            margin: 4px 0;
+        .barchart {
+            margin-top: 50px;
         }
 
         .table {
@@ -36,6 +32,7 @@
     <script src="../dist/bubbles.umd.js"></script>
     <div class="dashboard">
         <div class="filter-bar" id="filter-bar"></div>
+        <div class="barchart" id="barchart"></div>
         <div class="table" id="table"></div>
     </div>
     <!-- load the main data file as a global -->

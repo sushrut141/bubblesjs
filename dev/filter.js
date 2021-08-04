@@ -20,6 +20,17 @@ const filterBubble = bubble.viewAs({
     },
 });
 
+const barChartBubble = filterBubble.fork().viewAs({
+    mount: '.barchart',
+    type: 'barchart',
+    width: 800,
+    height: 400,
+    channels: {
+        x: 'Origin',
+        y: 'Acceleration',
+    },
+});
+
 const tableBubble = filterBubble.fork().viewAs({
     mount: '.table',
     type: 'table',

@@ -1,15 +1,15 @@
-import { isDefined } from "../data/common";
+import { getFieldRange, isDefined } from "../data/common";
 
 /**
  * Creates a DOM node based on the supplied parameters.
  * 
- * @param {string} tag Tag name for the DOM node.
+ * @param {string} tagName Tag name for the DOM node.
  * @param {Object} attributes Map of attrbutes to set on the DOM node.
  * @param {string | undefined} innerText Inner text for the created node.
  * @returns Created DOM node.
  */
-export function createElem(tag, attributes, innerText) {
-    const elem = document.createElement(tag);
+export function createElem(tagName, attributes, innerText) {
+    const elem = document.createElement(tagName);
     for (const key in attributes) {
         elem.setAttribute(key, attributes[key]);
     }
@@ -73,4 +73,26 @@ export function getMountPoint(viewConfig) {
         return document.querySelector(viewConfig.mount);
     }
     throw new Error('mount field needs to be specified in view configuration.');
+}
+
+
+/**
+ * Computes the ideal number off bands to use while rendering axis.
+ */
+export function getNumerixAxisBands(width) {
+    return Math.floor(width / 50);
+}
+
+/**
+ * Computes the axis range of the data that can be split into the supplied
+ * number of bands.
+ * 
+ * @param {Array<Object>} params.data Data used by the bubble.
+ * @param {string} params.field Name of the field whose range to compute.
+ * @param {number} params.bands Number of bands range can be split into.
+ */
+export function getAxisBounds(params) {
+    const bands = params.bands;
+    const [_, maximum] = getFieldRange(params.data, params.field);
+    return [0, (1 + Math.floor(maximum / bands)) * bands];
 }

@@ -1,8 +1,10 @@
 .bubbles.bubbles-table {
     width: 100%;
+    background: white;
     border-collapse: collapse;
     box-shadow: 0 0px 1px rgba(0, 0, 0, 0.6);
     border-radius: 4px;
+    color: rgba(0, 0, 0, 0.7);
 }
 
 .bubbles-table .bubbles-table-header {

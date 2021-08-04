@@ -3,7 +3,7 @@ import { createDropdown, createElem, getMountPoint } from "../common";
 import './table.css';
 
 /**
- * Render a Table Visualization that shows the supplied columns.
+ * Renders a Table Visualization that shows the supplied columns.
  * 
  * @param {Array<Object>} params.data Data array to visualize with bubbles.
  * @param {Object} params.viewConfig View configuration for the Table view.

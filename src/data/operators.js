@@ -30,7 +30,13 @@ export function groupBy(keys, aggregationMap) {
     };
 }
 
-function bucketDataByKeys(keys, data) {
+/**
+ * Spilts data into series by recursively bucketing data by the list of keys.
+ * 
+ * @param {Array<string>} keys Keys to bucket by.
+ * @param {Array<Object>} data Data to bucket.
+ */
+export function bucketDataByKeys(keys, data) {
     function recurse(array, i) {
         if (i === keys.length) {
             return array;

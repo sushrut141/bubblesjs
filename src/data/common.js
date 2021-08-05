@@ -50,6 +50,9 @@ export function getDataFields(data) {
 
 /**
  * Gets the list of unique values in a categorical dataset. 
+ * 
+ * @param {Array<Object>} data Data array to visualize with bubbles.
+ * @param {string} field Field whose unique values in the data are to computed.
  */
 export function getFieldValues(data, field) {
     const values = {};
@@ -85,4 +88,8 @@ export function getFieldRange(data, field) {
         }
     }
     return [minimum, maximum];
+}
+
+export function getDataSeries(data, ) {
+
 }

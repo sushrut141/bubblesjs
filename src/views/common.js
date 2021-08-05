@@ -94,5 +94,6 @@ export function getNumerixAxisBands(width) {
 export function getAxisBounds(params) {
     const bands = params.bands;
     const [_, maximum] = getFieldRange(params.data, params.field);
+    // find the smallest multiple of `bands` that can divide the maximum value
     return [0, (1 + Math.floor(maximum / bands)) * bands];
 }

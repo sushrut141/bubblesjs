@@ -1,4 +1,5 @@
-import { getFieldRange, getFieldValues, isDefined } from "../../data/common";
+import { getFieldValues, isDefined } from "../../data/common";
+import { getColorForIdx } from "../color";
 import { getAxisBounds, getMountPoint, getNumerixAxisBands } from "../common";
 import { createSVGElem } from "../svg_common";
 import './barchart.css';
@@ -39,6 +40,7 @@ BarChartView.prototype._render = function () {
     this._createChartTitle(this._elem$);
     this._createChartYAxis(this._elem$);
     this._createChartXAxis(this._elem$);
+    this._createBarSeries(this._elem$);
     root$.appendChild(this._elem$);
 };
 
@@ -80,6 +82,76 @@ BarChartView.prototype._createChartTitle = function (mount$) {
     }, title);
     titleGroup$.appendChild(title$);
     mount$.appendChild(titleGroup$);
+};
+
+BarChartView.prototype._createSeriesValueMapping = function (color, xField, yField) {
+    const mapping = {};
+    for (let i = 0; i < this._data.length; i += 1) {
+        const tuple = this._data[i];
+        const xFieldValue = tuple[xField];
+        const seriesValue = tuple[color];
+        const yFieldValue = tuple[yField];
+        if (
+            isDefined(xFieldValue) &&
+            isDefined(seriesValue) &&
+            isDefined(yFieldValue)
+        ) {
+            const key = `${seriesValue}-${xFieldValue}`;
+            mapping[key] = yFieldValue;
+        }
+    }
+    return mapping;
+};
+
+BarChartView.prototype._createBarSeries = function (mount$) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    const xField = this._viewConfig.channels['x'];
+    const yField = this._viewConfig.channels['y'];
+    const color = this._viewConfig.channels['color'];
+    const availableWidth = (width * 0.9) - 10;
+    const xFieldValues = getFieldValues(this._data, xField);
+    const chunk = availableWidth / xFieldValues.length;
+    const seriesValues = getFieldValues(this._data, color);
+    const seriesCount = seriesValues.length;
+    const seriesWidth = chunk / seriesCount;
+    const availableHeight = height * 0.65;
+    const bands = getNumerixAxisBands(availableHeight);
+    const [rangeStart, rangeEnd] = getAxisBounds({
+        data: this._data,
+        field: yField,
+        bands,
+    });
+    // map of concatenated xField-color to value
+    const dataMatrix = this._createSeriesValueMapping(color, xField, yField);
+    const perUnitHeight = (0.65 * height) / (rangeEnd - rangeStart);
+    // 10% space allocated for y axis
+    const base = 0.1 * width;
+    // for each color series
+    for (let i = 0; i < seriesCount; i += 1) {
+        const seriesValue  = seriesValues[i];
+        const series$ = createSVGElem('g', { class: 'bubbles-barchart-series' });
+        // for each band
+        for (let j = 0; j < xFieldValues.length; j += 1) {
+            const xFieldValue = xFieldValues[j];
+            const value = dataMatrix[`${seriesValue}-${xFieldValue}`];
+            if (isDefined(value)) {
+                // each rect will start a quarter slot width from the slot start
+                // each rect will be half the slot width in width
+                const slotStartX = base + (j * chunk) + (i * seriesWidth) + (seriesWidth / 4);
+                const slotStartY = (0.15 * height) + (0.65 * height) - (perUnitHeight * value) - 3;
+                const bar$ = createSVGElem('rect', {
+                    x: slotStartX,
+                    y: slotStartY,
+                    width: (seriesWidth / 2),
+                    height: (perUnitHeight * value),
+                    fill: getColorForIdx(i),
+                });
+                series$.appendChild(bar$);
+            }
+        }
+        mount$.appendChild(series$);
+    }
 };
 
 /**
@@ -151,6 +223,7 @@ BarChartView.prototype._createChartXAxis = function (mount$) {
     const chunk = availableWidth / domain.length;
     const xAxis$ = createSVGElem('g', { class: 'bubbles-barchart-x-axis' });
     const highlightBands$ = createSVGElem('g', { class: 'bubbles-barchart-x-axisband' });
+    // 10% space allocated for y axis
     const base = 0.1 * width;
     for (let i = 0; i < domain.length; i += 1) {
         const positionX = base + ((i + 1) * chunk) - (chunk / 2);

@@ -28,6 +28,7 @@ const barChartBubble = filterBubble.fork().viewAs({
     channels: {
         x: 'Origin',
         y: 'Acceleration',
+        color: 'Cylinders',
     },
 });
 
@@ -38,5 +39,6 @@ const tableBubble = filterBubble.fork().viewAs({
         Name: 'Name',
         Origin: 'Origin',
         Weight_in_lbs: 'Weight',
+        Cylinders: 'Cylinders',
     },
 });

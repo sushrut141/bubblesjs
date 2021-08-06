@@ -41,8 +41,12 @@ BarChartView.prototype._render = function () {
     this._createChartTitle(this._elem$);
     this._createChartYAxis(this._elem$);
     this._createChartXAxis(this._elem$);
-    this._createBarSeries(this._elem$);
-    this._createSeriesLegend(this._elem$);
+    if (isDefined(this._viewConfig.channels['color'])) {
+        this._createBarSeries(this._elem$);
+        this._createSeriesLegend(this._elem$);
+    } else {
+        this._createBars(this._elem$);
+    }
     root$.appendChild(this._elem$);
 };
 
@@ -62,6 +66,64 @@ BarChartView.prototype._createChartCanvas = function () {
     });
     elem$.appendChild(background$);
     this._elem$ = elem$;
+};
+
+BarChartView.prototype._createValueMapping = function (xField, yField) {
+    const mapping = {};
+    for (let i = 0; i < this._data.length; i += 1) {
+        const tuple = this._data[i];
+        if (
+            isDefined(tuple[xField]) &&
+            isDefined(tuple[yField])
+        ) {
+            mapping[tuple[xField]] = tuple[yField];
+        }
+    }
+    return mapping;
+};
+
+BarChartView.prototype._createBars = function (mount$) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    const xField = this._viewConfig.channels['x'];
+    const yField = this._viewConfig.channels['y'];
+    const availableWidth = (width * 0.9) - 10;
+    const xFieldValues = getFieldValues(this._data, xField);
+    const chunk = availableWidth / xFieldValues.length;
+    const availableHeight = height * 0.65;
+    const bands = getNumerixAxisBands(availableHeight);
+    const [rangeStart, rangeEnd] = getAxisBounds({
+        data: this._data,
+        field: yField,
+        bands,
+    });
+    // map of concatenated xField-color to value
+    const dataMatrix = this._createValueMapping(xField, yField);
+    const perUnitHeight = (0.65 * height) / (rangeEnd - rangeStart);
+    // 10% space allocated for y axis
+    const base = 0.1 * width;
+    const bars$ = createSVGElem('g', { class: 'bubbles-barchart-bars' });
+    // for each band
+    for (let j = 0; j < xFieldValues.length; j += 1) {
+        const xFieldValue = xFieldValues[j];
+        const value = dataMatrix[xFieldValue];
+        if (isDefined(value)) {
+            // each rect will start a quarter slot width from the slot start
+            // each rect will be half the slot width in width
+            const slotStartX = base + (j * chunk) + (chunk / 4);
+            // TODO(sushrut) - find a better way to deal with 3px offset everywhere
+            const slotStartY = (0.15 * height) + (0.65 * height) - (perUnitHeight * value) - 3; // 3px axis offset for ticket font size
+            const bar$ = createSVGElem('rect', {
+                x: slotStartX,
+                y: slotStartY,
+                width: (chunk / 2),
+                height: (perUnitHeight * value),
+                fill: getColorForIdx(0),
+            });
+            bars$.appendChild(bar$);
+        }
+    }
+    mount$.appendChild(bars$);
 };
 
 /**

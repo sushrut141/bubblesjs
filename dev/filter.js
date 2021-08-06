@@ -26,9 +26,9 @@ const barChartBubble = filterBubble.fork().viewAs({
     width: 800,
     height: 400,
     channels: {
-        x: 'Origin',
+        x: 'Cylinders',
         y: 'Acceleration',
-        color: 'Cylinders',
+        color: 'Origin',
     },
 });
 

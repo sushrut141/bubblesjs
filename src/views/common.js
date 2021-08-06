@@ -97,3 +97,13 @@ export function getAxisBounds(params) {
     // find the smallest multiple of `bands` that can divide the maximum value
     return [0, (1 + Math.floor(maximum / bands)) * bands];
 }
+
+/**
+ * Gets the bounding box of the text once inserted into the DOM.
+ */
+export function getTextDimensions(text, font) {
+    const element$ = document.createElement('canvas');
+    const context = element$.getContext("2d");
+    context.font = font;
+    return context.measureText(text);
+}

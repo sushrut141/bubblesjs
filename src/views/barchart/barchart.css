@@ -13,5 +13,9 @@
 }
 
 .bubbles-barchart-band:hover {
-    opacity: 0.7;
+    opacity: 0.8;
+}
+
+.bubbles-series-legend-item {
+    cursor: pointer;
 }

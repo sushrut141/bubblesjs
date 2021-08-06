@@ -1,6 +1,6 @@
 import { getFieldValues, isDefined } from "../../data/common";
 import { getColorForIdx } from "../color";
-import { getAxisBounds, getMountPoint, getNumerixAxisBands } from "../common";
+import { getAxisBounds, getMountPoint, getNumerixAxisBands, getTextDimensions } from "../common";
 import { createSVGElem } from "../svg_common";
 import './barchart.css';
 
@@ -18,6 +18,7 @@ export function BarChartView(params) {
     this._data = params.data;
     this._viewConfig = params.viewConfig;
     this._elem$ = undefined;
+    this._inactiveSeries = [];
     this._render();
 }
 
@@ -41,6 +42,7 @@ BarChartView.prototype._render = function () {
     this._createChartYAxis(this._elem$);
     this._createChartXAxis(this._elem$);
     this._createBarSeries(this._elem$);
+    this._createSeriesLegend(this._elem$);
     root$.appendChild(this._elem$);
 };
 
@@ -103,6 +105,45 @@ BarChartView.prototype._createSeriesValueMapping = function (color, xField, yFie
     return mapping;
 };
 
+BarChartView.prototype._createSeriesLegend = function (mount$) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    const color = this._viewConfig.channels['color'];
+    const seriesValues = getFieldValues(this._data, color);
+    const colorLegend$ =  createSVGElem('g', { class: 'bubbles-series-legend' });
+    let totalWidth = 0;
+    const colorSymbolWidth = 12;
+    const symbolTextPadding = 30;
+    for (let i = 0; i < seriesValues.length; i += 1) {
+        const series$ = createSVGElem('g', { class: 'bubbles-series-legend-item' });
+        const color$ = createSVGElem('rect', {
+            width: `${colorSymbolWidth}`,
+            height: `${colorSymbolWidth}`,
+            rx: `${colorSymbolWidth / 2}`,
+            ry: `${colorSymbolWidth / 2}`,
+            x: '2',
+            y: '4',
+            fill: getColorForIdx(i),
+        });
+        const label$ = createSVGElem('text', {
+            x: '21',
+            y: '15',
+            style: 'color:#333333;cursor:pointer;font-size:12px;fill:#333333;',
+            'text-anchor': 'start',
+        }, seriesValues[i]);
+        series$.appendChild(color$);
+        series$.appendChild(label$);
+        series$.setAttribute('transform', `translate(${totalWidth}, 3)`);
+        const layout = getTextDimensions(seriesValues[i], '12px sans-serif');
+        totalWidth += layout.width + colorSymbolWidth + symbolTextPadding;
+        colorLegend$.appendChild(series$);
+    }
+    const offsetX = (width - totalWidth) / 2;
+    const offsetY = (0.9 * height);
+    colorLegend$.setAttribute('transform', `translate(${offsetX}, ${offsetY})`);
+    mount$.appendChild(colorLegend$);
+};
+
 BarChartView.prototype._createBarSeries = function (mount$) {
     const width = this._viewConfig.width;
     const height = this._viewConfig.height;
@@ -139,7 +180,8 @@ BarChartView.prototype._createBarSeries = function (mount$) {
                 // each rect will start a quarter slot width from the slot start
                 // each rect will be half the slot width in width
                 const slotStartX = base + (j * chunk) + (i * seriesWidth) + (seriesWidth / 4);
-                const slotStartY = (0.15 * height) + (0.65 * height) - (perUnitHeight * value) - 3;
+                // TODO(sushrut) - find a better way to deal with 3px offset everywhere
+                const slotStartY = (0.15 * height) + (0.65 * height) - (perUnitHeight * value) - 3; // 3px axis offset for ticket font size
                 const bar$ = createSVGElem('rect', {
                     x: slotStartX,
                     y: slotStartY,

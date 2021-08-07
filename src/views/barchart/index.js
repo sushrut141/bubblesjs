@@ -157,8 +157,8 @@ BarChartView.prototype._createSeriesValueMapping = function (color, xField, yFie
         const yFieldValue = tuple[yField];
         if (
             isDefined(xFieldValue) &&
-            isDefined(seriesValue) &&
-            isDefined(yFieldValue)
+            isDefined(yFieldValue) &&
+            isDefined(seriesValue)
         ) {
             const key = `${seriesValue}-${xFieldValue}`;
             mapping[key] = yFieldValue;

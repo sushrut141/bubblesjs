@@ -36,6 +36,13 @@ Bubbles.prototype.transform = function(transformArray) {
 };
 
 /**
+ * Creates a child bubble that observes changes to the parent bubble.
+ */
+Bubbles.prototype.fork = function () {
+    return this.transform(emptyTransforms());
+};
+
+/**
  * Updates the data source for this bubble and all child bubbles.
  * @param {Array<Object>} data New Tabular data.
  */

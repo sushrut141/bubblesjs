@@ -2,17 +2,9 @@ const Bubbles = bubbles.bubbles
 
 const transform = bubbles.transform;
 
-const bubble = Bubbles.fromData(DATA).transform([
-    transform.map(obj => {
-        const date = new Date(obj['Year']);
-        return {
-            ...obj,
-           'Year': date.getFullYear().toString(),
-        }
-    }),
-]);
+const bubble = Bubbles.fromData(DATA);
 
-const filterBubble = bubble.viewAs({
+const filterBubble = bubble.fork().viewAs({
     mount: '.filter-bar',
     type: 'filter',
     types: {
@@ -25,6 +17,17 @@ const filterBubble = bubble.viewAs({
         Origin: 'string',
         Weight_in_lbs: 'number',
         Year: 'date',
+    },
+});
+
+const lineBubble = filterBubble.fork().viewAs({
+    mount: '.linechart',
+    type: 'linechart',
+    width: 800,
+    height: 400,
+    channels: {
+        x: 'Year',
+        y: 'Displacement',
     },
 });
 

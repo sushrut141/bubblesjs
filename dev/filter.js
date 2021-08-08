@@ -28,6 +28,7 @@ const lineBubble = filterBubble.fork().viewAs({
     channels: {
         x: 'Year',
         y: 'Displacement',
+        color: 'Origin',
     },
 });
 

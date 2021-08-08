@@ -90,6 +90,70 @@ export function getFieldRange(data, field) {
     return [minimum, maximum];
 }
 
-export function getDataSeries(data, ) {
+export function getTimeFieldRange(data, field) {
+    let minimum = undefined;
+    let maximum = undefined;
+    for (let i = 0; i < data.length; i += 1) {
+        const tuple = data[i];
+        if (isUndefined(minimum) && isDefined(tuple[field])) {
+            minimum = new Date(tuple[field]).getTime();
+        }
+        if (isUndefined(maximum) && isDefined(tuple[field])) {
+            maximum = new Date(tuple[field]).getTime();
+        }
+        if (isDefined(tuple[field])) {
+            const epoch = new Date(tuple[field]).getTime();
+            minimum = Math.min(minimum, epoch);
+            maximum = Math.max(maximum, epoch);
+        }
+    }
+    return [minimum, maximum];
+}
 
+
+
+/**
+ * Gets the value assciated with a field split by series.
+ * 
+ * @param {Array<Object>} data Data array to visualize.
+ * @param {string} keyField Primary key whose value to read.
+ * @param {string} valueField Field whose value to read.
+ * @param {string} series Field to split the data series by.
+ * @returns Data mapping associated with this split.
+ */
+export function getSeriesDataMapping(data, keyField, valueField, series) {
+    const mapping = {};
+    for (let i = 0; i < data.length; i += 1) {
+        const tuple = data[i];
+        if (
+            isDefined(tuple[keyField]) &&
+            isDefined(tuple[valueField]) &&
+            isDefined(tuple[series])
+        ) {
+            mapping[`${tuple[series]}-${tuple[keyField]}`] = tuple[valueField];
+        }
+    }
+    return mapping;
+}
+
+/**
+ * Creates an association between the columsn used on x and y axis.
+ * This utility overwrites the value when multiple y values are present for 
+ * a given x axis value.
+ * @param {Array<Object>} data Data array to visualize.
+ * @param {string} xField x axis field to read.
+ * @param {string} yField y axis field to read.
+ */
+export function getDataMapping(data, xField, yField) {
+    const mapping = {};
+    for (let i = 0; i < data.length; i += 1) {
+        const tuple = data[i];
+        if (
+            isDefined(tuple[xField]) &&
+            isDefined(tuple[yField])
+        ) {
+            mapping[tuple[xField]] = tuple[yField];
+        }
+    }
+    return mapping;
 }

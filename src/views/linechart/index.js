@@ -1,5 +1,6 @@
-import { isDefined } from "../../data/common";
-import { getAxisBounds, getMountPoint, getNumerixAxisBands } from "../common";
+import { getDataMapping, getFieldValues, getSeriesDataMapping, getTimeFieldRange, isDefined } from "../../data/common";
+import { getColorForIdx } from "../color";
+import { getAxisBounds, getMountPoint, getNumerixAxisBands, getTextDimensions } from "../common";
 import { createSVGElem } from "../svg_common";
 import { computeTimeAxis } from "./axis";
 import './linechart.css';
@@ -41,6 +42,12 @@ LineChartView.prototype._render = function () {
     this._createChartTitle(this._elem$);
     this._createChartYAxis(this._elem$);
     this._createChartXAxis(this._elem$);
+    if (isDefined(this._viewConfig.channels['color'])) {
+        this._createLineSeries(this._elem$);
+        this._createSeriesLegend(this._elem$);
+    } else {
+        this._createLineChartView(this._elem$);
+    }
     root$.appendChild(this._elem$);
 };
 
@@ -70,7 +77,7 @@ LineChartView.prototype._createChartCanvas = function () {
  *  height: 15%;
  */
  LineChartView.prototype._createChartTitle = function (mount$) {
-    const title = this._viewConfig.title || `${this._viewConfig.channels.x} vs ${this._viewConfig.channels.y}`;
+    const title = this._viewConfig.title || `${this._viewConfig.channels['x']} vs ${this._viewConfig.channels['y']}`;
     const titleGroup$ = createSVGElem('g', {
         class: 'bubbles-chart-title-group'
     });
@@ -82,6 +89,172 @@ LineChartView.prototype._createChartCanvas = function () {
     }, title);
     titleGroup$.appendChild(title$);
     mount$.appendChild(titleGroup$);
+};
+
+LineChartView.prototype._createLineChartView = function (mount$) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    const xField = this._viewConfig.channels['x'];
+    const yField = this._viewConfig.channels['y'];
+    const color = this._viewConfig.channels['color'];
+    const dataMatrix = getDataMapping(this._data, xField, yField);
+    const availableWidth = (0.9 * width) - 10;
+    const availableHeight = (0.65 * height);
+    const bands = getNumerixAxisBands(availableHeight);
+    const [xStart, xEnd] = getTimeFieldRange(this._data, xField);
+    const [yStart, yEnd] = getAxisBounds({
+        data: this._data,
+        field: yField,
+        bands,
+    });
+    const xUnit = availableWidth / (xEnd - xStart);
+    const yUnit = availableHeight / (yEnd - yStart);
+    const xBase = (0.1 * width);
+    const yBase = (0.2 * height);
+    const series$ = createSVGElem('g', { class: 'bubbles-line-series' });
+    const sortedData = this._data.filter(obj => isDefined(obj[xField])).sort(function(a, b) {
+        const x = a[xField]; 
+        const y = b[xField];
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    });
+    const points = [];
+    for (let j = 0; j < sortedData.length; j += 1) {
+        const tuple = sortedData[j];
+        if (isDefined(tuple[xField])) {
+            const xValue = new Date(tuple[xField]).getTime();
+            const yValue = dataMatrix[tuple[xField]];
+            if (isDefined(yValue)) {
+                const xPos = (xValue * xUnit) + xBase;
+                const yPos = height - (yValue * yUnit) - yBase;
+                points.push([xPos, yPos]);
+            }
+        }
+    }
+    // create line
+    let path = '';
+    for (let idx = 0; idx < points.length; idx += 1) {
+        const [xPos, yPos] = points[idx];
+        if (idx === 0) {
+            path += `M ${xPos} ${yPos} `;
+        } else {
+            path += `L ${xPos} ${yPos} `;
+        }
+    }
+    const line$ = createSVGElem('path', {
+        d: path,
+        class: 'bubles-linechart-line',
+        fill: 'none',
+        'stroke-width': 2,
+        'stoke-linecap': 'round',
+        stroke: getColorForIdx(0),
+    });
+    series$.appendChild(line$);
+    mount$.appendChild(series$);
+};
+
+// TODO(sushrut) - this legend can be shared across charts
+LineChartView.prototype._createSeriesLegend = function (mount$) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    const color = this._viewConfig.channels['color'];
+    const seriesValues = getFieldValues(this._data, color);
+    const colorLegend$ =  createSVGElem('g', { class: 'bubbles-series-legend' });
+    let totalWidth = 0;
+    const colorSymbolWidth = 12;
+    const symbolTextPadding = 30;
+    for (let i = 0; i < seriesValues.length; i += 1) {
+        const series$ = createSVGElem('g', { class: 'bubbles-series-legend-item' });
+        const color$ = createSVGElem('rect', {
+            width: `${colorSymbolWidth}`,
+            height: `${colorSymbolWidth}`,
+            rx: `${colorSymbolWidth / 2}`,
+            ry: `${colorSymbolWidth / 2}`,
+            x: '2',
+            y: '4',
+            fill: getColorForIdx(i),
+        });
+        const label$ = createSVGElem('text', {
+            x: '21',
+            y: '15',
+            style: 'color:#333333;cursor:pointer;font-size:12px;fill:#333333;',
+            'text-anchor': 'start',
+        }, seriesValues[i]);
+        series$.appendChild(color$);
+        series$.appendChild(label$);
+        series$.setAttribute('transform', `translate(${totalWidth}, 3)`);
+        const layout = getTextDimensions(seriesValues[i], '12px sans-serif');
+        totalWidth += layout.width + colorSymbolWidth + symbolTextPadding;
+        colorLegend$.appendChild(series$);
+    }
+    const offsetX = (width - totalWidth) / 2;
+    const offsetY = (0.9 * height);
+    colorLegend$.setAttribute('transform', `translate(${offsetX}, ${offsetY})`);
+    mount$.appendChild(colorLegend$);
+};
+
+LineChartView.prototype._createLineSeries = function (mount$) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    const xField = this._viewConfig.channels['x'];
+    const yField = this._viewConfig.channels['y'];
+    const color = this._viewConfig.channels['color'];
+    const seriesValues = getFieldValues(this._data, color);
+    const dataMatrix = getSeriesDataMapping(this._data, xField, yField, color);
+    const availableWidth = (0.9 * width) - 10;
+    const availableHeight = (0.65 * height);
+    const bands = getNumerixAxisBands(availableHeight);
+    const [xStart, xEnd] = getTimeFieldRange(this._data, xField);
+    const [yStart, yEnd] = getAxisBounds({
+        data: this._data,
+        field: yField,
+        bands,
+    });
+    const xUnit = availableWidth / (xEnd - xStart);
+    const yUnit = availableHeight / (yEnd - yStart);
+    const xBase = (0.1 * width);
+    const yBase = (0.2 * height);
+    const series$ = createSVGElem('g', { class: 'bubbles-line-series' });
+    const sortedData = this._data.filter(obj => isDefined(obj[xField])).sort(function(a, b) {
+        const x = a[xField]; 
+        const y = b[xField];
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    });
+    for (let i = 0; i < seriesValues.length; i += 1) {
+        const points = [];
+        for (let j = 0; j < sortedData.length; j += 1) {
+            const tuple = sortedData[j];
+            const color = seriesValues[i];
+            if (isDefined(tuple[xField])) {
+                const xValue = new Date(tuple[xField]).getTime();
+                const yValue = dataMatrix[`${color}-${tuple[xField]}`]
+                if (isDefined(yValue)) {
+                    const xPos = (xValue * xUnit) + xBase;
+                    const yPos = height - (yValue * yUnit) - yBase;
+                    points.push([xPos, yPos]);
+                }
+            }
+        }
+        // create line
+        let path = '';
+        for (let idx = 0; idx < points.length; idx += 1) {
+            const [xPos, yPos] = points[idx];
+            if (idx === 0) {
+                path += `M ${xPos} ${yPos} `;
+            } else {
+                path += `L ${xPos} ${yPos} `;
+            }
+        }
+        const line$ = createSVGElem('path', {
+            d: path,
+            class: 'bubles-linechart-line',
+            fill: 'none',
+            'stroke-width': 2,
+            'stoke-linecap': 'round',
+            stroke: getColorForIdx(i),
+        });
+        series$.appendChild(line$);
+    }
+    mount$.appendChild(series$);
 };
 
 LineChartView.prototype._createChartXAxis = function (mount$) {

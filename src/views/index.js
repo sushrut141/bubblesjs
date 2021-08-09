@@ -10,6 +10,13 @@ const VIEW_MAP = {
     'linechart': LineChartView,
 };
 
+/**
+ * Creates a view depending on the supplied view configuration.
+ * 
+ * @param {Object} params.viewConfig View configuration fr the view.
+ * @param {Array<Object>} params.data Data array to be visualized.
+ * @param {BubbleView} params.bubbleView Bubble view associated with this view.
+ */
 export function createViewFor(params) {
     const type = params.viewConfig.type;
     const View = VIEW_MAP[type];

@@ -1,4 +1,4 @@
-import { getDataMapping, getFieldValues, getSeriesDataMapping, getTimeFieldRange, isDefined } from "../../data/common";
+import { getDataMapping, getFieldValues, getSeriesDataMapping, getTimeFieldRange, isDefined, isUndefined } from "../../data/common";
 import { getColorForIdx } from "../color";
 import { getAxisBounds, getMountPoint, getNumerixAxisBands, getTextDimensions } from "../common";
 import { createSVGElem } from "../svg_common";
@@ -18,8 +18,9 @@ import './linechart.css';
 export function LineChartView(params) {
     this._data = params.data;
     this._viewConfig = params.viewConfig;
+    this._bubbleView = params.bubbleView;
     this._elem$ = undefined;
-    this._inactiveSeries = [];
+    this._inactiveSeries = {};
     this._render();
 }
 
@@ -135,9 +136,9 @@ LineChartView.prototype._createLineChartView = function (mount$) {
     for (let idx = 0; idx < points.length; idx += 1) {
         const [xPos, yPos] = points[idx];
         if (idx === 0) {
-            path += `M ${xPos} ${yPos} `;
+            path += `M ${xPos} ${yPos}`;
         } else {
-            path += `L ${xPos} ${yPos} `;
+            path += ` L ${xPos} ${yPos}`;
         }
     }
     const line$ = createSVGElem('path', {
@@ -164,6 +165,9 @@ LineChartView.prototype._createSeriesLegend = function (mount$) {
     const symbolTextPadding = 30;
     for (let i = 0; i < seriesValues.length; i += 1) {
         const series$ = createSVGElem('g', { class: 'bubbles-series-legend-item' });
+        if (this._inactiveSeries[seriesValues[i]]) {
+            series$.classList.add('bubbles-series-legend-item--inactive');
+        }
         const color$ = createSVGElem('rect', {
             width: `${colorSymbolWidth}`,
             height: `${colorSymbolWidth}`,
@@ -172,12 +176,14 @@ LineChartView.prototype._createSeriesLegend = function (mount$) {
             x: '2',
             y: '4',
             fill: getColorForIdx(i),
+            'data-color': seriesValues[i],
         });
         const label$ = createSVGElem('text', {
             x: '21',
             y: '15',
             style: 'color:#333333;cursor:pointer;font-size:12px;fill:#333333;',
             'text-anchor': 'start',
+            'data-color': seriesValues[i],
         }, seriesValues[i]);
         series$.appendChild(color$);
         series$.appendChild(label$);
@@ -189,7 +195,34 @@ LineChartView.prototype._createSeriesLegend = function (mount$) {
     const offsetX = (width - totalWidth) / 2;
     const offsetY = (0.9 * height);
     colorLegend$.setAttribute('transform', `translate(${offsetX}, ${offsetY})`);
+    colorLegend$.addEventListener('click', this._onSeriesLegendClick.bind(this));
     mount$.appendChild(colorLegend$);
+};
+
+LineChartView.prototype._onSeriesLegendClick = function (evt) {
+    const series = evt.target.getAttribute('data-color');
+    if (this._inactiveSeries[series]) {
+        delete this._inactiveSeries[series];
+    } else {
+        this._inactiveSeries[series] = true;
+    }
+    this._render();
+    this._updateParentBubble();
+};
+
+LineChartView.prototype._updateParentBubble = function () {
+    const newData = [];
+    for (let i = 0; i < this._data.length; i += 1) {
+        const tuple = this._data[i];
+        const color = tuple[this._viewConfig.channels['color']];
+        if (isUndefined(this._inactiveSeries[color])) {
+            newData.push(tuple);
+        }
+    }
+    for (let i = 0; i < this._bubbleView._children.length; i += 1) {
+        const childBubble = this._bubbleView._children[i];
+        childBubble.update(newData);
+    }
 };
 
 LineChartView.prototype._createLineSeries = function (mount$) {
@@ -221,9 +254,12 @@ LineChartView.prototype._createLineSeries = function (mount$) {
     });
     for (let i = 0; i < seriesValues.length; i += 1) {
         const points = [];
+        const color = seriesValues[i];
+        if (this._inactiveSeries[color]) {
+            continue;
+        }
         for (let j = 0; j < sortedData.length; j += 1) {
             const tuple = sortedData[j];
-            const color = seriesValues[i];
             if (isDefined(tuple[xField])) {
                 const xValue = new Date(tuple[xField]).getTime();
                 const yValue = dataMatrix[`${color}-${tuple[xField]}`]

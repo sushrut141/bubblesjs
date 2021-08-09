@@ -43,7 +43,7 @@ const barChartBubble = filterBubble.fork().viewAs({
     },
 });
 
-const seriesBarChartBubble = filterBubble.fork().viewAs({
+const seriesBarChartBubble = lineBubble.fork().viewAs({
     mount: '.series-barchart',
     type: 'barchart',
     width: 800,

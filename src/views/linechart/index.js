@@ -14,6 +14,7 @@ import './linechart.css';
  * @param {Object} params.viewConfig.channels Map of channels and the fields to visualize in each.
  * @param {number} params.viewConfig.width Width of the chart.
  * @param {number} params.viewConfig.height Height of the chart.
+ * @param {BubbleView} params.bubbleView Bubble view associated with this view.
  */
 export function LineChartView(params) {
     this._data = params.data;

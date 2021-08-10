@@ -1,4 +1,4 @@
-import { getFieldValues, isDefined } from "../../data/common";
+import { getFieldValues, isDefined, isUndefined } from "../../data/common";
 import { getColorForIdx } from "../color";
 import { getAxisBounds, getMountPoint, getNumerixAxisBands, getTextDimensions } from "../common";
 import { createSVGElem } from "../svg_common";
@@ -13,12 +13,14 @@ import './barchart.css';
  * @param {Object} params.viewConfig.channels Map of channels and the fields to visualize in each.
  * @param {number} params.viewConfig.width Width of the chart.
  * @param {number} params.viewConfig.height Height of the chart.
+ * @param {BubbleView} params.bubbleView Bubble view associated with this view.
  */
 export function BarChartView(params) {
     this._data = params.data;
     this._viewConfig = params.viewConfig;
+    this._bubbleView = params.bubbleView;
     this._elem$ = undefined;
-    this._inactiveSeries = [];
+    this._inactiveSeries = {};
     this._render();
 }
 
@@ -178,6 +180,9 @@ BarChartView.prototype._createSeriesLegend = function (mount$) {
     const symbolTextPadding = 30;
     for (let i = 0; i < seriesValues.length; i += 1) {
         const series$ = createSVGElem('g', { class: 'bubbles-series-legend-item' });
+        if (this._inactiveSeries[seriesValues[i]]) {
+            series$.classList.add('bubbles-series-legend-item--inactive');
+        }
         const color$ = createSVGElem('rect', {
             width: `${colorSymbolWidth}`,
             height: `${colorSymbolWidth}`,
@@ -186,12 +191,14 @@ BarChartView.prototype._createSeriesLegend = function (mount$) {
             x: '2',
             y: '4',
             fill: getColorForIdx(i),
+            'data-color': seriesValues[i],
         });
         const label$ = createSVGElem('text', {
             x: '21',
             y: '15',
             style: 'color:#333333;cursor:pointer;font-size:12px;fill:#333333;',
             'text-anchor': 'start',
+            'data-color': seriesValues[i],
         }, seriesValues[i]);
         series$.appendChild(color$);
         series$.appendChild(label$);
@@ -203,7 +210,34 @@ BarChartView.prototype._createSeriesLegend = function (mount$) {
     const offsetX = (width - totalWidth) / 2;
     const offsetY = (0.9 * height);
     colorLegend$.setAttribute('transform', `translate(${offsetX}, ${offsetY})`);
+    colorLegend$.addEventListener('click', this._onSeriesLegendClick.bind(this));
     mount$.appendChild(colorLegend$);
+};
+
+BarChartView.prototype._onSeriesLegendClick = function (evt) {
+    const series = evt.target.getAttribute('data-color');
+    if (this._inactiveSeries[series]) {
+        delete this._inactiveSeries[series];
+    } else {
+        this._inactiveSeries[series] = true;
+    }
+    this._render();
+    this._updateParentBubble();
+};
+
+BarChartView.prototype._updateParentBubble = function () {
+    const newData = [];
+    for (let i = 0; i < this._data.length; i += 1) {
+        const tuple = this._data[i];
+        const color = tuple[this._viewConfig.channels['color']];
+        if (isUndefined(this._inactiveSeries[color])) {
+            newData.push(tuple);
+        }
+    }
+    for (let i = 0; i < this._bubbleView._children.length; i += 1) {
+        const childBubble = this._bubbleView._children[i];
+        childBubble.update(newData);
+    }
 };
 
 BarChartView.prototype._createBarSeries = function (mount$) {
@@ -215,7 +249,16 @@ BarChartView.prototype._createBarSeries = function (mount$) {
     const availableWidth = (width * 0.9) - 10;
     const xFieldValues = getFieldValues(this._data, xField);
     const chunk = availableWidth / xFieldValues.length;
-    const seriesValues = getFieldValues(this._data, color);
+    const colorValues = getFieldValues(this._data, color);
+    const seriesValues = 
+        colorValues
+            .filter(seriesValue => !(seriesValue in this._inactiveSeries));
+    // map colors to ids since idx is used to color bars
+    // even after a series is hidden through series legend
+    const colorIdxMap = {};
+    for (let i = 0; i < colorValues.length; i += 1) {
+        colorIdxMap[colorValues[i]] = i;
+    }        
     const seriesCount = seriesValues.length;
     const seriesWidth = chunk / seriesCount;
     const availableHeight = height * 0.65;
@@ -249,7 +292,7 @@ BarChartView.prototype._createBarSeries = function (mount$) {
                     y: slotStartY,
                     width: (seriesWidth / 2),
                     height: (perUnitHeight * value),
-                    fill: getColorForIdx(i),
+                    fill: getColorForIdx(colorIdxMap[seriesValue]),
                 });
                 series$.appendChild(bar$);
             }

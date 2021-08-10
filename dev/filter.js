@@ -32,17 +32,6 @@ const lineBubble = filterBubble.fork().viewAs({
     },
 });
 
-const barChartBubble = filterBubble.fork().viewAs({
-    mount: '.barchart',
-    type: 'barchart',
-    width: 800,
-    height: 400,
-    channels: {
-        x: 'Year',
-        y: 'Acceleration',
-    },
-});
-
 const seriesBarChartBubble = lineBubble.fork().viewAs({
     mount: '.series-barchart',
     type: 'barchart',
@@ -52,6 +41,17 @@ const seriesBarChartBubble = lineBubble.fork().viewAs({
         x: 'Year',
         y: 'Acceleration',
         color: 'Origin'
+    },
+});
+
+const barChartBubble = seriesBarChartBubble.fork().viewAs({
+    mount: '.barchart',
+    type: 'barchart',
+    width: 800,
+    height: 400,
+    channels: {
+        x: 'Year',
+        y: 'Acceleration',
     },
 });
 

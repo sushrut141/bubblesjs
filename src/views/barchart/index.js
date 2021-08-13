@@ -261,6 +261,7 @@ BarChartView.prototype._createBarSeries = function (mount$) {
     }        
     const seriesCount = seriesValues.length;
     const seriesWidth = chunk / seriesCount;
+    const seriesNewWidth = seriesWidth / 2;
     const availableHeight = height * 0.65;
     const bands = getNumerixAxisBands(availableHeight);
     const [rangeStart, rangeEnd] = getAxisBounds({
@@ -273,6 +274,12 @@ BarChartView.prototype._createBarSeries = function (mount$) {
     const perUnitHeight = (0.65 * height) / (rangeEnd - rangeStart);
     // 10% space allocated for y axis
     const base = 0.1 * width;
+    // half the chunk width will be used for white space
+    // quarter chunk on each side
+    // rest of the space is equally divided among series
+    // (0.5 * chunk) / seriesCount
+    // the width of each bar will be redurec by 5px on each side to create spacing
+
     // for each color series
     for (let i = 0; i < seriesCount; i += 1) {
         const seriesValue  = seriesValues[i];
@@ -284,13 +291,15 @@ BarChartView.prototype._createBarSeries = function (mount$) {
             if (isDefined(value)) {
                 // each rect will start a quarter slot width from the slot start
                 // each rect will be half the slot width in width
+                const xOffset = base + (j * chunk);
+                const slotStartNewX = xOffset + (chunk / 4) + (i * seriesNewWidth) +  5;
                 const slotStartX = base + (j * chunk) + (i * seriesWidth) + (seriesWidth / 4);
                 // TODO(sushrut) - find a better way to deal with 3px offset everywhere
                 const slotStartY = (0.15 * height) + (0.65 * height) - (perUnitHeight * value) - 3; // 3px axis offset for ticket font size
                 const bar$ = createSVGElem('rect', {
-                    x: slotStartX,
+                    x: slotStartNewX,
                     y: slotStartY,
-                    width: (seriesWidth / 2),
+                    width: seriesNewWidth - 10,
                     height: (perUnitHeight * value),
                     fill: getColorForIdx(colorIdxMap[seriesValue]),
                 });

@@ -236,7 +236,7 @@ LineChartView.prototype._createLineSeries = function (mount$) {
     const xField = this._viewConfig.channels['x'];
     const yField = this._viewConfig.channels['y'];
     const color = this._viewConfig.channels['color'];
-    const seriesValues = getFieldValues(this._data, color).sort();
+    const seriesValues = getFieldValues(this._data, color);
     const dataMatrix = getSeriesDataMapping(this._data, xField, yField, color);
     const availableWidth = (0.9 * width) - 10;
     const availableHeight = (0.65 * height);
@@ -415,6 +415,7 @@ LineChartView.prototype._setupTooltip = function (mount$) {
             series,
             width: (0.9 * width) - 10,
             data: this._data,
+            inactiveSeries: this._inactiveSeries,
         });
         const tooltipObj = tooltip.getTooltipForCoords(x, y);
         this._tooltip$ = tooltipObj.tooltip$;
@@ -449,7 +450,7 @@ LineChartView.prototype._drawTooltipMarkers = function (mount$, tooltipData) {
     const values = tooltipData.markerValues;
     const xVal = new Date(tooltipData.xVal).getTime();
     const series = Object.keys(values).sort();
-    if (isDefined(this._markers$)) {
+    if (isDefined(this._markers$) && mount$.contains(this._markers$)) {
         mount$.removeChild(this._markers$);
     }
     const xPos = (xVal * xUnit) + xBase;
@@ -462,6 +463,9 @@ LineChartView.prototype._drawTooltipMarkers = function (mount$, tooltipData) {
     });
     markers$.appendChild(verticalMarker$);
     for (let i = 0; i < series.length; i += 1) {
+        if (this._inactiveSeries[series[i]]) {
+            continue;
+        }
         const yVal = values[series[i]];
         const yPos = height - (yVal * yUnit) - yBase;
         const circle$ = createSVGElem('circle', {

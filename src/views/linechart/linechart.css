@@ -6,3 +6,6 @@
 .bubbles-series-legend-item--inactive {
     opacity: 0.7;
 }
+.bubbles-series-tooltip {
+    opacity: 0.7;
+}

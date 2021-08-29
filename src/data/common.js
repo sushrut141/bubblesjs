@@ -61,7 +61,7 @@ export function getFieldValues(data, field) {
             values[data[i][field]] = true;
         }
     }
-    return Object.keys(values);
+    return Object.keys(values).sort();
 }
 
 /**

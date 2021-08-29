@@ -1,4 +1,4 @@
-import { getDataRangeForValue, getFieldValues, getNumericFieldData, getTemporalFieldData, isDefined } from "../../data/common";
+import { getDataRangeForValue, getFieldValues, getNumericFieldData, getTemporalFieldData, isDefined, isUndefined } from "../../data/common";
 import { getTextDimensions } from "../common";
 import { createSVGElem } from "../svg_common";
 
@@ -11,18 +11,17 @@ export function Tooltip(params) {
     });
     this._yField = params.yField;
     this._series = params.series;
+    this._inactiveSeries = params.inactiveSeries;
     this._width = params.width;
     this._height = params.height;
     // range of fields
     this._xRange = undefined;
-    this._yRange = undefined;
     this._seriesRange = undefined;
     this._init();
 }
 
 Tooltip.prototype._init = function () {
     this._xRange = getTemporalFieldData(this._data, this._xField);
-    this._yRange = getNumericFieldData(this._data, this._yField);
     if (isDefined(this._series)) {
         this._seriesRange = getFieldValues(this._data, this._series);
     }
@@ -33,10 +32,10 @@ Tooltip.prototype.getTooltipForCoords = function (x, y) {
     let xVal = undefined;
     const tooltip$ = createSVGElem('g', { class: 'bubbles bubbles-series-tooltip' });
     let highlightedData = [];
+    const xIdx = Math.floor(x / this._width * this._xRange.length);
+    const target = this._xRange[xIdx];
+    const tuples = getDataRangeForValue(this._data, this._xField, target);
     if (isDefined(this._series)) {
-        const xIdx = Math.floor(x / this._width * this._xRange.length);
-        const target = this._xRange[xIdx];
-        const tuples = getDataRangeForValue(this._data, this._xField, target);
         for (let i = 0; i < tuples.length; i += 1) {
             const row = tuples[i];
             if (isDefined(row[this._xField])) {
@@ -49,9 +48,19 @@ Tooltip.prototype.getTooltipForCoords = function (x, y) {
         highlightedData = tuples;
     } else {
         // non series line chart tooltip
+        for (let i = 0; i < tuples.length; i += 1) {
+            const row = tuples[i];
+            if (isDefined(row[this._xField])) {
+                xVal = row[this._xField];
+            }
+            if (isDefined(row[this._yField])) {
+                values[this._yField] = row[this._yField];
+            }
+        }
+        highlightedData = tuples;
     }
     xVal = new Date(xVal).toDateString();
-    const series = Object.keys(values).sort();
+    const series = Object.keys(values).sort().filter(color => isUndefined(this._inactiveSeries[color]));
     let maxKeyWidth = 0
     let maxWidth = 0;
     const keyWidths = [];

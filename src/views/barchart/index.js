@@ -44,13 +44,14 @@ BarChartView.prototype._render = function () {
     this._createChartCanvas();
     this._createChartTitle(this._elem$);
     this._createChartYAxis(this._elem$);
-    this._createChartXAxis(this._elem$);
     if (isDefined(this._viewConfig.channels['color'])) {
         this._createBarSeries(this._elem$);
         this._createSeriesLegend(this._elem$);
     } else {
         this._createBars(this._elem$);
     }
+    // create x axis after bars so that highlight bands are overlayed on bars
+    this._createChartXAxis(this._elem$);
     root$.appendChild(this._elem$);
     // wait for chart to render before injecting tooltip
     setTimeout(() => {

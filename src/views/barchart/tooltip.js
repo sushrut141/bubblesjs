@@ -1,4 +1,4 @@
-import { getDataRangeForValue, getFieldValues, getTemporalFieldData, isDefined, isUndefined } from "../../data/common";
+import { getFieldValues, isDefined, isUndefined } from "../../data/common";
 import { getTextDimensions } from "../common";
 import { createSVGElem } from "../svg_common";
 
@@ -30,7 +30,7 @@ export function Tooltip(params) {
 }
 
 Tooltip.prototype._init = function () {
-    this._xRange = getTemporalFieldData(this._data, this._xField);
+    this._xRange = getFieldValues(this._data, this._xField);
     if (isDefined(this._series)) {
         this._seriesRange = getFieldValues(this._data, this._series);
     }
@@ -39,11 +39,11 @@ Tooltip.prototype._init = function () {
 Tooltip.prototype.getTooltipForCoords = function (x, y) {
     const values = {};
     let xVal = undefined;
-    const tooltip$ = createSVGElem('g', { class: 'bubbles-linechart-tooltip' });
+    const tooltip$ = createSVGElem('g', { class: 'bubbles-barchart-tooltip' });
     let highlightedData = [];
     const xIdx = Math.floor(x / this._width * this._xRange.length);
     const target = this._xRange[xIdx];
-    const tuples = getDataRangeForValue(this._data, this._xField, target);
+    const tuples = this._data.filter(tup => tup[this._xField] === target);
     if (isDefined(this._series)) {
         for (let i = 0; i < tuples.length; i += 1) {
             const row = tuples[i];
@@ -68,8 +68,6 @@ Tooltip.prototype.getTooltipForCoords = function (x, y) {
         }
         highlightedData = tuples;
     }
-    xVal = new Date(xVal).toDateString();
-    const timeLabelDimensions = getTextDimensions(xVal, '12px sans-serif');
     const series = Object.keys(values).sort().filter(color => isUndefined(this._inactiveSeries[color]));
     let maxKeyWidth = 0
     let maxWidth = 0;
@@ -78,9 +76,10 @@ Tooltip.prototype.getTooltipForCoords = function (x, y) {
         const keyDimensions = getTextDimensions(`${series[i]}:`, '11px sans-serif');
         const valueDimensions = getTextDimensions(values[series[i]], 'bold 11px sans-serif');
         maxKeyWidth = Math.max(maxKeyWidth, keyDimensions.width);
-        maxWidth = Math.max(maxWidth, timeLabelDimensions.width, maxKeyWidth + valueDimensions.width + 10);
+        maxWidth = Math.max(maxWidth, maxKeyWidth + valueDimensions.width + 10);
         keyWidths.push(keyDimensions.width);
     }
+    const timeLabelDimensions = getTextDimensions(xVal, '12px sans-serif');
     const rows$ = createSVGElem('g', { class: 'bubbles bubbles-tooltip-rows' });
     const timeLabel$ = createSVGElem('text', {
         style: 'font-size:12px;'

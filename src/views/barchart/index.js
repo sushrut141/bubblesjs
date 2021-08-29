@@ -2,6 +2,7 @@ import { getFieldValues, isDefined, isUndefined } from "../../data/common";
 import { getColorForIdx } from "../color";
 import { getAxisBounds, getMountPoint, getNumerixAxisBands, getTextDimensions } from "../common";
 import { createSVGElem } from "../svg_common";
+import { Tooltip } from "./tooltip";
 import './barchart.css';
 
 /**
@@ -20,6 +21,7 @@ export function BarChartView(params) {
     this._viewConfig = params.viewConfig;
     this._bubbleView = params.bubbleView;
     this._elem$ = undefined;
+    this._tooltip$ = undefined;
     this._inactiveSeries = {};
     this._render();
 }
@@ -50,6 +52,10 @@ BarChartView.prototype._render = function () {
         this._createBars(this._elem$);
     }
     root$.appendChild(this._elem$);
+    // wait for chart to render before injecting tooltip
+    setTimeout(() => {
+        this._setupTooltip(this._elem$);
+    }, 0);
 };
 
 BarChartView.prototype._createChartCanvas = function () {
@@ -113,8 +119,7 @@ BarChartView.prototype._createBars = function (mount$) {
             // each rect will start a quarter slot width from the slot start
             // each rect will be half the slot width in width
             const slotStartX = base + (j * chunk) + (chunk / 4);
-            // TODO(sushrut) - find a better way to deal with 3px offset everywhere
-            const slotStartY = (0.15 * height) + (0.65 * height) - (perUnitHeight * value) - 3; // 3px axis offset for ticket font size
+            const slotStartY = (0.15 * height) + (0.65 * height) - (perUnitHeight * value);
             const bar$ = createSVGElem('rect', {
                 x: slotStartX,
                 y: slotStartY,
@@ -292,12 +297,10 @@ BarChartView.prototype._createBarSeries = function (mount$) {
                 // each rect will start a quarter slot width from the slot start
                 // each rect will be half the slot width in width
                 const xOffset = base + (j * chunk);
-                const slotStartNewX = xOffset + (chunk / 4) + (i * seriesNewWidth) +  5;
-                const slotStartX = base + (j * chunk) + (i * seriesWidth) + (seriesWidth / 4);
-                // TODO(sushrut) - find a better way to deal with 3px offset everywhere
-                const slotStartY = (0.15 * height) + (0.65 * height) - (perUnitHeight * value) - 3; // 3px axis offset for ticket font size
+                const slotStartX = xOffset + (chunk / 4) + (i * seriesNewWidth) +  5;
+                const slotStartY = (0.15 * height) + (0.65 * height) - (perUnitHeight * value);
                 const bar$ = createSVGElem('rect', {
-                    x: slotStartNewX,
+                    x: slotStartX,
                     y: slotStartY,
                     width: seriesNewWidth - 10,
                     height: (perUnitHeight * value),
@@ -343,13 +346,14 @@ BarChartView.prototype._createChartYAxis = function (mount$) {
         // grid lines start from 10% mark
         const gridLineStartX = width * 0.1;
         // TODO(sushrut) - use computed styles to get the tick characters actual width and height
-        const gridLineY = position * height / 100 - 3; // -3 to align grid line with 10px font axis tick
+        const gridLineY = position * height / 100;
+        const labelY = ((position * height / 100) + 5) / height * 100; // center label of height 11px by adding approx half its height(5px) to position
         const gridLineEndX = width - 10;
         const axisTick$ = createSVGElem('text', {
             style: 'color:#666666;cursor:default;font-size:11px;fill:#666666;',
             'text-anchor': 'end',
             x: '7%',
-            y: `${position}%`,
+            y: `${labelY}%`,
         }, value);
         const gridLine$ = createSVGElem('path', {
             class: 'bubbles-grid-line',
@@ -383,9 +387,9 @@ BarChartView.prototype._createChartXAxis = function (mount$) {
     const base = 0.1 * width;
     for (let i = 0; i < domain.length; i += 1) {
         const positionX = base + ((i + 1) * chunk) - (chunk / 2);
-        const bandYStart = (height * 0.8) - 3;
+        const bandYStart = (height * 0.8);
         // TODO(sushrut) - use computed styles to get the tick characters actual width and height
-        const bandYEnd = (height * 0.15) - 3; // - 3px to account for tick font size
+        const bandYEnd = (height * 0.15);
         const axisTick$ = createSVGElem('text', {
             style: 'color:#666666;cursor:default;font-size:11px;fill:#666666;',
             'text-anchor': 'middle',
@@ -403,4 +407,48 @@ BarChartView.prototype._createChartXAxis = function (mount$) {
     }
     mount$.appendChild(highlightBands$);
     mount$.appendChild(xAxis$);
+};
+
+BarChartView.prototype._setupTooltip = function (mount$) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    const xField = this._viewConfig.channels['x'];
+    const yField = this._viewConfig.channels['y'];
+    const series = this._viewConfig.channels['color'];
+    mount$.addEventListener('mousemove', (evt) => {
+        if (this._tooltip$ && mount$.contains(this._tooltip$)) {
+            mount$.removeChild(this._tooltip$);
+        }
+        let point = mount$.createSVGPoint();
+        point.x = evt.clientX;
+        point.y = evt.clientY;
+        point = point.matrixTransform(mount$.getScreenCTM().inverse());
+        if (point.x < 0.1 * width || point.x > width - 10) {
+            return;
+        }
+        if (point.y < 0.15 * height || point.y > 0.8 * height) {
+            return;
+        }
+        const baseX = point.x;
+        const baseY = point.y;
+        // subtract space used by y axis
+        let x = baseX - (0.1 * width);
+        const y = baseY;
+        const tooltip = new Tooltip({
+            xField,
+            yField,
+            series,
+            width: (0.9 * width) - 10,
+            data: this._data,
+            inactiveSeries: this._inactiveSeries,
+        });
+        const tooltipObj = tooltip.getTooltipForCoords(x, y);
+        this._tooltip$ = tooltipObj.tooltip$;
+        let tooltipX = point.x + 10;
+        if (tooltipX + tooltipObj.width > width) {
+            tooltipX -= tooltipObj.width + 10;
+        }
+        this._tooltip$.setAttribute('transform', `translate(${tooltipX}, ${baseY})`);
+        mount$.appendChild(this._tooltip$);
+    });
 };

@@ -3,8 +3,8 @@ import { getColorForIdx } from "../color";
 import { getAxisBounds, getMountPoint, getNumerixAxisBands, getTextDimensions } from "../common";
 import { createSVGElem } from "../svg_common";
 import { computeTimeAxis } from "./axis";
-import './linechart.css';
 import { Tooltip } from "./tooltip";
+import './linechart.css';
 
 /**
  * Renders a Line chart based on supplied configuration.
@@ -22,6 +22,8 @@ export function LineChartView(params) {
     this._viewConfig = params.viewConfig;
     this._bubbleView = params.bubbleView;
     this._elem$ = undefined;
+    this._tooltip$ = undefined;
+    this._markers$ = undefined;
     this._inactiveSeries = {};
     this._render();
 }
@@ -312,7 +314,7 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
     const xAxis$ = createSVGElem('g', { class: 'bubbles-time-axis' });
     for (let i = 0; i < axisLabels.length; i += 1) {
         const tickX = base + axisLabels[i].position;
-        const tickStartY = (0.8 * height) - 3;
+        const tickStartY = (0.8 * height);
         const tickEndY = tickStartY + 10;
         const tick$ = createSVGElem('path', {
             class: 'bubbles-tick',
@@ -364,13 +366,14 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
         // grid lines start from 10% mark
         const gridLineStartX = width * 0.1;
         // TODO(sushrut) - use computed styles to get the tick characters actual width and height
-        const gridLineY = position * height / 100 - 3; // -3 to align grid line with 10px font axis tick
+        const gridLineY = position * height / 100;
         const gridLineEndX = width - 10;
+        const labelY = ((position * height / 100) + 5) / height * 100; // center label of height 11px by adding approx half its height(5px) to position
         const axisTick$ = createSVGElem('text', {
             style: 'color:#666666;cursor:default;font-size:11px;fill:#666666;',
             'text-anchor': 'end',
             x: '7%',
-            y: `${position}%`,
+            y: `${labelY}%`,
         }, value);
         const gridLine$ = createSVGElem('path', {
             class: 'bubbles-grid-line',
@@ -393,17 +396,27 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
 
 LineChartView.prototype._setupTooltip = function (mount$) {
     const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
     const xField = this._viewConfig.channels['x'];
     const yField = this._viewConfig.channels['y'];
     const series = this._viewConfig.channels['color'];
     mount$.addEventListener('mousemove', (evt) => {
-        if (this._tooltip$ && mount$.contains(this._tooltip$)) {
+        if (isDefined(this._tooltip$) && mount$.contains(this._tooltip$)) {
             mount$.removeChild(this._tooltip$);
+        }
+        if (isDefined(this._markers$) && mount$.contains(this._markers$)) {
+            mount$.removeChild(this._markers$);
         }
         let point = mount$.createSVGPoint();
         point.x = evt.clientX;
         point.y = evt.clientY;
         point = point.matrixTransform(mount$.getScreenCTM().inverse());
+        if (point.x < 0.1 * width || point.x > width - 10) {
+            return;
+        }
+        if (point.y < 0.15 * height || point.y > 0.8 * height) {
+            return;
+        }
         const baseX = point.x;
         const baseY = point.y;
         // subtract space used by y axis
@@ -450,12 +463,9 @@ LineChartView.prototype._drawTooltipMarkers = function (mount$, tooltipData) {
     const values = tooltipData.markerValues;
     const xVal = new Date(tooltipData.xVal).getTime();
     const series = Object.keys(values).sort();
-    if (isDefined(this._markers$) && mount$.contains(this._markers$)) {
-        mount$.removeChild(this._markers$);
-    }
     const xPos = (xVal * xUnit) + xBase;
-    const vMarkerStartY = (0.8 * height) - 3;
-    const vMarkerEndY = (0.15 * height) - 3;
+    const vMarkerStartY = (0.8 * height);
+    const vMarkerEndY = (0.15 * height);
     const markers$ = createSVGElem('g', { class: 'bubbles bubbles-highlight-markers' });
     const verticalMarker$ = createSVGElem('path', {
         d: `M ${xPos} ${vMarkerStartY} L ${xPos} ${vMarkerEndY}`,

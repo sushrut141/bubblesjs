@@ -4,6 +4,7 @@ import { getAxisBounds, getMountPoint, getNumerixAxisBands, getTextDimensions } 
 import { createSVGElem } from "../svg_common";
 import { computeTimeAxis } from "./axis";
 import './linechart.css';
+import { Tooltip } from "./tooltip";
 
 /**
  * Renders a Line chart based on supplied configuration.
@@ -51,6 +52,10 @@ LineChartView.prototype._render = function () {
         this._createLineChartView(this._elem$);
     }
     root$.appendChild(this._elem$);
+    // wait for chart to render before injecting tooltip
+    setTimeout(() => {
+        this._setupTooltip(this._elem$);
+    }, 0);
 };
 
 LineChartView.prototype._createChartCanvas = function () {
@@ -98,7 +103,6 @@ LineChartView.prototype._createLineChartView = function (mount$) {
     const height = this._viewConfig.height;
     const xField = this._viewConfig.channels['x'];
     const yField = this._viewConfig.channels['y'];
-    const color = this._viewConfig.channels['color'];
     const dataMatrix = getDataMapping(this._data, xField, yField);
     const availableWidth = (0.9 * width) - 10;
     const availableHeight = (0.65 * height);
@@ -232,7 +236,7 @@ LineChartView.prototype._createLineSeries = function (mount$) {
     const xField = this._viewConfig.channels['x'];
     const yField = this._viewConfig.channels['y'];
     const color = this._viewConfig.channels['color'];
-    const seriesValues = getFieldValues(this._data, color);
+    const seriesValues = getFieldValues(this._data, color).sort();
     const dataMatrix = getSeriesDataMapping(this._data, xField, yField, color);
     const availableWidth = (0.9 * width) - 10;
     const availableHeight = (0.65 * height);
@@ -385,4 +389,90 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
     yAxis$.appendChild(yAxisLabel$);
     mount$.appendChild(yGridLines$);
     mount$.appendChild(yAxis$);
+};
+
+LineChartView.prototype._setupTooltip = function (mount$) {
+    const width = this._viewConfig.width;
+    const xField = this._viewConfig.channels['x'];
+    const yField = this._viewConfig.channels['y'];
+    const series = this._viewConfig.channels['color'];
+    mount$.addEventListener('mousemove', (evt) => {
+        if (this._tooltip$ && mount$.contains(this._tooltip$)) {
+            mount$.removeChild(this._tooltip$);
+        }
+        let point = mount$.createSVGPoint();
+        point.x = evt.clientX;
+        point.y = evt.clientY;
+        point = point.matrixTransform(mount$.getScreenCTM().inverse());
+        const baseX = point.x;
+        const baseY = point.y;
+        // subtract space used by y axis
+        let x = baseX - (0.1 * width);
+        const y = baseY;
+        const tooltip = new Tooltip({
+            xField,
+            yField,
+            series,
+            width: (0.9 * width) - 10,
+            data: this._data,
+        });
+        const tooltipObj = tooltip.getTooltipForCoords(x, y);
+        this._tooltip$ = tooltipObj.tooltip$;
+        let tooltipX = point.x + 10;
+        if (tooltipX + tooltipObj.width > width) {
+            tooltipX -= tooltipObj.width + 10;
+        }
+        this._tooltip$.setAttribute('transform', `translate(${tooltipX}, ${baseY})`);
+        this._drawTooltipMarkers(mount$, tooltipObj);
+        mount$.appendChild(this._tooltip$);
+    });
+};
+
+LineChartView.prototype._drawTooltipMarkers = function (mount$, tooltipData) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    const xField = this._viewConfig.channels['x'];
+    const yField = this._viewConfig.channels['y'];
+    const availableWidth = (0.9 * width) - 10;
+    const availableHeight = (0.65 * height);
+    const bands = getNumerixAxisBands(availableHeight);
+    const [xStart, xEnd] = getTimeFieldRange(this._data, xField);
+    const [yStart, yEnd] = getAxisBounds({
+        data: this._data,
+        field: yField,
+        bands,
+    });
+    const xUnit = availableWidth / (xEnd - xStart);
+    const yUnit = availableHeight / (yEnd - yStart);
+    const xBase = (0.1 * width);
+    const yBase = (0.2 * height);
+    const values = tooltipData.markerValues;
+    const xVal = new Date(tooltipData.xVal).getTime();
+    const series = Object.keys(values).sort();
+    if (isDefined(this._markers$)) {
+        mount$.removeChild(this._markers$);
+    }
+    const xPos = (xVal * xUnit) + xBase;
+    const vMarkerStartY = (0.8 * height) - 3;
+    const vMarkerEndY = (0.15 * height) - 3;
+    const markers$ = createSVGElem('g', { class: 'bubbles bubbles-highlight-markers' });
+    const verticalMarker$ = createSVGElem('path', {
+        d: `M ${xPos} ${vMarkerStartY} L ${xPos} ${vMarkerEndY}`,
+        stroke: '#d6d6d6',
+    });
+    markers$.appendChild(verticalMarker$);
+    for (let i = 0; i < series.length; i += 1) {
+        const yVal = values[series[i]];
+        const yPos = height - (yVal * yUnit) - yBase;
+        const circle$ = createSVGElem('circle', {
+            cx: xPos,
+            cy: yPos,
+            r: 4,
+            fill: getColorForIdx(i),
+            stroke: '#ffffff',
+        });
+        markers$.appendChild(circle$);
+    }
+    this._markers$ = markers$;
+    mount$.appendChild(this._markers$);
 };

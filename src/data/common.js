@@ -65,6 +65,31 @@ export function getFieldValues(data, field) {
 }
 
 /**
+ * Get the sorted list of values associated with a numeric field.
+ */
+export function getNumericFieldData(data, field) {
+    const output = [];
+    for (let i = 0; i < data.length; i += 1) {
+        const tuple = data[i];
+        if (isDefined(tuple[field])) {
+            output.push(tuple[field]);
+        }
+    }
+    return output.sort();
+}
+
+export function getTemporalFieldData(data, field) {
+    const output = [];
+    for (let i = 0; i < data.length; i += 1) {
+        const tuple = data[i];
+        if (isDefined(tuple[field])) {
+            output.push(new Date(tuple[field]).getTime());
+        }
+    }
+    return output;
+}
+
+/**
  * Computes the [min, max] range for a field in the supplied data.
  * 
  * @param {Array<Object>} data Data array to visualize with bubbles.
@@ -156,4 +181,45 @@ export function getDataMapping(data, xField, yField) {
         }
     }
     return mapping;
+}
+
+/**
+ * Computes the list of tuples whose field equals a target value.
+ * @param {Array<Object>} sortedData Sorted Data array.
+ * @param {string} field Field whose value to find.
+ * @param {number} target Target value to find.
+ */
+export function getDataRangeForValue(sortedData, field, target) {
+    const filtered = sortedData.filter(tuple => isDefined(tuple[field]));
+    let startIdx = undefined;
+    let endIdx = undefined;
+    let start = 0;
+    let end = filtered.length - 1;
+    while (start <= end) {
+        const mid = Math.floor((start + end) / 2);
+        const tuple = filtered[mid];
+        if (new Date(tuple[field]).getTime() > target) {
+            end  = mid - 1
+        } else {
+            start = mid + 1;
+        }
+    }
+    endIdx = start - 1;
+    start = 0;
+    end = filtered.length - 1;
+    while (start <= end) {
+        const mid = Math.floor((start + end) / 2);
+        const tuple = filtered[mid];
+        if (new Date(tuple[field]).getTime() >= target) {
+            end = mid - 1;
+        } else {
+            start = mid + 1;
+        }
+    }
+    startIdx = end + 1;
+    const output = [];
+    for (let i = startIdx; i <= endIdx; i += 1) {
+        output.push(filtered[i]);
+    }
+    return output;
 }

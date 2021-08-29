@@ -13,24 +13,34 @@
         }
 
         .linechart {
-            margin-top: 50px;
         }
 
         .barchart {
-            margin-top: 50px;
         }
 
         .series-barchart {
-            margin-top: 50px;
         }
 
         .table {
-            margin-top: 50px;
-            width: 800px;
+            width: 600px;
         }
 
         .dashboard {
-            margin: 100px;
+            margin: 20px;
+        }
+
+        .row {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+        }
+
+        .column {
+            margin-left: 20px;
+        }
+
+        .column:first-child {
+            margin-left: 0;
         }
 
     </style>
@@ -40,10 +50,14 @@
     <script src="../dist/bubbles.umd.js"></script>
     <div class="dashboard">
         <div class="filter-bar" id="filter-bar"></div>
-        <div class="linechart" id="linechart"></div>
-        <div class="barchart" id="barchart"></div>
-        <div class="series-barchart" id="series-barchart"></div>
-        <div class="table" id="table"></div>
+        <div class="row">
+            <div class="column table" id="table"></div>
+            <div class="column linechart" id="linechart"></div>
+        </div>
+        <div class="row">
+            <div class="column series-barchart" id="series-barchart"></div>
+            <div class="column barchart" id="barchart"></div>
+        </div>
     </div>
     <!-- load the main data file as a global -->
     <script src="data.js"></script>

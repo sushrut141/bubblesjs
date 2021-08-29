@@ -8,7 +8,7 @@ import { isDefined } from "../data/common";
  * @param {string|undefined} innerText Inner text foor the created node.
  * @returns Created SVG node.
  */
-export function createSVGElem(tagName, attributes, innerText) {
+export function createSVGElem(tagName, attributes = {}, innerText) {
     const elem$ = document.createElementNS("http://www.w3.org/2000/svg", tagName);
     for (const key in attributes) {
         elem$.setAttribute(key, attributes[key]);

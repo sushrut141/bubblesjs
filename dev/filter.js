@@ -1,7 +1,5 @@
 const Bubbles = bubbles.bubbles
 
-const transform = bubbles.transform;
-
 const bubble = Bubbles.fromData(DATA);
 
 const filterBubble = bubble.fork().viewAs({
@@ -23,7 +21,7 @@ const filterBubble = bubble.fork().viewAs({
 const lineBubble = filterBubble.fork().viewAs({
     mount: '.linechart',
     type: 'linechart',
-    width: 800,
+    width: 700,
     height: 400,
     channels: {
         x: 'Year',
@@ -35,7 +33,7 @@ const lineBubble = filterBubble.fork().viewAs({
 const seriesBarChartBubble = lineBubble.fork().viewAs({
     mount: '.series-barchart',
     type: 'barchart',
-    width: 800,
+    width: 600,
     height: 400,
     channels: {
         x: 'Year',
@@ -47,10 +45,10 @@ const seriesBarChartBubble = lineBubble.fork().viewAs({
 const barChartBubble = seriesBarChartBubble.fork().viewAs({
     mount: '.barchart',
     type: 'barchart',
-    width: 800,
+    width: 600,
     height: 400,
     channels: {
-        x: 'Year',
+        x: 'Origin',
         y: 'Acceleration',
     },
 });
@@ -58,6 +56,7 @@ const barChartBubble = seriesBarChartBubble.fork().viewAs({
 const tableBubble = filterBubble.fork().viewAs({
     mount: '.table',
     type: 'table',
+    rowCount: 7,
     headers: {
         Name: 'Name',
         Origin: 'Origin',

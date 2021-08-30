@@ -223,3 +223,12 @@ export function getDataRangeForValue(sortedData, field, target) {
     }
     return output;
 }
+
+/**
+ * Prettifies a number so that it can be represented concisely.
+ * Example: 32456 -> 3.24k
+ */
+export function prettifyNumber(number) {
+    // TODO(sushruts) - add better logic to handle larger numbers.
+    return number.toFixed(2);
+}

@@ -2,12 +2,14 @@ import {FilterView} from './filter/index';
 import {TableView} from './table/index';
 import {BarChartView} from './barchart/index';
 import {LineChartView} from './linechart/index';
+import {KPIView} from './kpi/index';
 
 const VIEW_MAP = {
     'filter': FilterView,
     'table': TableView,
     'barchart': BarChartView,
     'linechart': LineChartView,
+    'kpi': KPIView,
 };
 
 /**

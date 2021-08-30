@@ -18,6 +18,24 @@ const filterBubble = bubble.fork().viewAs({
     },
 });
 
+const totalCountKPI = filterBubble.fork().viewAs({
+    mount: '.count-kpi',
+    type: 'kpi',
+    label: 'Vehicles',
+    compute: function (data) {
+        return data.length;
+    },
+});
+
+const meanWeight = filterBubble.fork().viewAs({
+    mount: '.mean-kpi',
+    type: 'kpi',
+    label: 'Average Weight',
+    compute: function (data) {
+        return data.reduce((accum, tuple) => accum + (tuple['Weight_in_lbs'] || 0), 0) / data.length;
+    },
+});
+
 const lineBubble = filterBubble.fork().viewAs({
     mount: '.linechart',
     type: 'linechart',

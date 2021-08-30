@@ -12,15 +12,6 @@
             width: 800px;
         }
 
-        .linechart {
-        }
-
-        .barchart {
-        }
-
-        .series-barchart {
-        }
-
         .table {
             width: 600px;
         }
@@ -43,6 +34,10 @@
             margin-left: 0;
         }
 
+        .mean-kpi {
+            margin-left: 20px;
+        }
+
     </style>
     <link rel="stylesheet" href="../dist/bubbles.css" >
 </head>
@@ -50,6 +45,10 @@
     <script src="../dist/bubbles.umd.js"></script>
     <div class="dashboard">
         <div class="filter-bar" id="filter-bar"></div>
+        <div class="row">
+            <div class="count-kpi"></div>
+            <div class="mean-kpi"></div>
+        </div>
         <div class="row">
             <div class="column table" id="table"></div>
             <div class="column linechart" id="linechart"></div>

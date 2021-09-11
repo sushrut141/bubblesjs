@@ -1,4 +1,4 @@
-const DATA = [
+var DATA = [
     {
        "Name":"chevrolet chevelle malibu",
        "Miles_per_Gallon":18,

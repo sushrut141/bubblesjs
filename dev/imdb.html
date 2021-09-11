@@ -4,6 +4,7 @@
     <style>
         body {
             background: #f8f8f8;
+            font-family: sans-serif;
         }
 
         .filter-bar {
@@ -37,6 +38,10 @@
         .mean-kpi {
             margin-left: 20px;
         }
+
+        .offset {
+            margin-top: 57px;
+        }
     </style>
     <link rel="stylesheet" href="../dist/bubbles.css" >
 </head>
@@ -45,20 +50,20 @@
     <div class="dashboard">
         <div class="filter-bar" id="filter-bar"></div>
         <div class="row">
-            <div class="count-kpi"></div>
-            <div class="mean-kpi"></div>
+            <div class="column">
+                <h3>Highest Grossing Movie Per Genre</h3>
+                <div class="table"></div>
+            </div>
+            <div class="column offset total-kpi"></div>
+            <div class="column offset mean-revenue-kpi"></div>
         </div>
         <div class="row">
-            <div class="column table" id="table"></div>
-            <div class="column linechart" id="linechart"></div>
-        </div>
-        <div class="row">
-            <div class="column series-barchart" id="series-barchart"></div>
-            <div class="column barchart" id="barchart"></div>
+            <div class="column linechart"></div>
+            <div class="column barchart"></div>
         </div>
     </div>
     <!-- load the main data file as a global -->
-    <script src="data.js"></script>
-    <script src="cars.js"></script>
+    <script src="imdb.js"></script>
+    <script src="imdb_charts.js"></script>
 </body>
 </html>

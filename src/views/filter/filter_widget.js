@@ -111,13 +111,26 @@ FilterWidget.prototype._createValueBox = function () {
     }
     const fieldType = this._viewConfig.types[this._field] || 'string';
     const onValueChange = (evt) => {
-        this._value = fieldType === 'string' ? evt.target.value : parseFloat(evt.target.value);
+        if (fieldType === 'string') {
+            this._value = evt.target.value;
+        } else if (fieldType === 'date') {
+            this._value = evt.target.value;
+        } else {
+            this._value = parseFloat(evt.target.value);
+        }
         this._render();
     };
     if (fieldType === 'number') {
         this._valueSelector$ = createElem('input', {
             class: 'bubbles-filter-value bubbles-input bubbles-input--number',
             type: 'number',
+        });
+        this._valueSelector$.value = this._value;
+        this._valueSelector$.addEventListener('change', onValueChange);
+    } else if (fieldType === 'date') {
+        this._valueSelector$ = createElem('input', {
+            class: 'bubbles-filter-value bubbles-input bubbles-input--number',
+            type: 'date',
         });
         this._valueSelector$.value = this._value;
         this._valueSelector$.addEventListener('change', onValueChange);

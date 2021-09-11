@@ -132,7 +132,7 @@ LineChartView.prototype._createLineChartView = function (mount$) {
             const xValue = new Date(tuple[xField]).getTime();
             const yValue = dataMatrix[tuple[xField]];
             if (isDefined(yValue)) {
-                const xPos = (xValue * xUnit) + xBase;
+                const xPos = (xValue * xUnit) + xBase - (xStart * xUnit);
                 const yPos = height - (yValue * yUnit) - yBase;
                 points.push([xPos, yPos]);
             }
@@ -271,7 +271,7 @@ LineChartView.prototype._createLineSeries = function (mount$) {
                 const xValue = new Date(tuple[xField]).getTime();
                 const yValue = dataMatrix[`${color}-${tuple[xField]}`]
                 if (isDefined(yValue)) {
-                    const xPos = (xValue * xUnit) + xBase;
+                    const xPos = (xValue * xUnit) + xBase - (xStart * xUnit);
                     const yPos = height - (yValue * yUnit) - yBase;
                     points.push([xPos, yPos]);
                 }
@@ -387,7 +387,7 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
         class: 'bubbles-chart-axis-title',
         style: 'color:#666666;fill:#666666;',
         'text-anchor': 'middle',
-        transform: `translate(${0.035 * width}, ${0.45 * height}) rotate(-90)`,
+        transform: `translate(${0.035 * width * 2 / 3}, ${0.45 * height}) rotate(-90)`,
     }, yField);
     yAxis$.appendChild(yAxisLabel$);
     mount$.appendChild(yGridLines$);
@@ -463,7 +463,7 @@ LineChartView.prototype._drawTooltipMarkers = function (mount$, tooltipData) {
     const values = tooltipData.markerValues;
     const xVal = new Date(tooltipData.xVal).getTime();
     const series = Object.keys(values).sort();
-    const xPos = (xVal * xUnit) + xBase;
+    const xPos = (xVal * xUnit) + xBase - (xStart * xUnit);
     const vMarkerStartY = (0.8 * height);
     const vMarkerEndY = (0.15 * height);
     const markers$ = createSVGElem('g', { class: 'bubbles bubbles-highlight-markers' });

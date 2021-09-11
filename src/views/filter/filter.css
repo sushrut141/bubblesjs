@@ -11,14 +11,14 @@
 .bubbles-filter-widget {
     display: flex;
     flex-direction: column;
-    width: 180px;
+    width: 190px;
     background: white;
     border-radius: 4px;
 }
 
 .bubbles-filter-widget__header {
     padding: 8px;
-    background: #0a55ff;
+    background: #0082ff;
     color: white;
     font-size: 22px;
     border-top-left-radius: 4px;
@@ -75,4 +75,13 @@
     color: #e0e0e0;
     border-radius: 50%;
     line-height: 50%;
+}
+
+.bubbles-filter-value.bubbles-input {
+    margin: 8px;
+    min-width: 100px;
+    width: auto;
+    padding: 6px 4px;
+    border-radius: 4px;
+    border: 1px solid rgba(197, 197, 197, 0.7);
 }

@@ -5,6 +5,8 @@ import {
     groupBy,
 } from './data/operators';
 
+// TODO(sushruts) - make bubbles the default export
+
 export default {
     bubbles: Bubbles,
     transform: {

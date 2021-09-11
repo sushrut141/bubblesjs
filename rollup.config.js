@@ -2,6 +2,7 @@ import commonjs from 'rollup-plugin-commonjs';
 import pkg from './package.json';
 import babel from 'rollup-plugin-babel';
 import scss from 'rollup-plugin-scss'
+import { uglify } from "rollup-plugin-uglify";
 
 export default [
   // browser-friendly UMD build
@@ -17,6 +18,7 @@ export default [
       babel({
         exclude: 'node_modules/**',
       }),
+      uglify(),
       scss({
         output: 'dist/bubbles.css',
       }),

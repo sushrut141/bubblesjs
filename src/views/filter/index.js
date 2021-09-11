@@ -77,7 +77,7 @@ FilterView.prototype._updateParentBubble = function () {
             const comparator = this._filters[i].comparator;
             const value = this._filters[i].value;
             const predicate = COMPARATOR_PREDICATE_MAP[comparator];
-            if (predicate(value, tuple[field])) {
+            if (predicate(tuple[field], value)) {
                 temp.push(tuple);
             }
         }

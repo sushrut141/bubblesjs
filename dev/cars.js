@@ -36,14 +36,19 @@ const meanWeight = filterBubble.fork().viewAs({
     },
 });
 
-const lineBubble = filterBubble.fork().viewAs({
+const lineBubble = filterBubble.fork().transform([
+    bubbles.transform.groupBy(['Origin', 'Year'], {
+        'Displacement': 'mean',
+        'Acceleration': 'mean',
+    })
+]).viewAs({
     mount: '.linechart',
     type: 'linechart',
     width: 700,
     height: 400,
     channels: {
         x: 'Year',
-        y: 'Displacement',
+        y: 'Acceleration',
         color: 'Origin',
     },
 });

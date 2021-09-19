@@ -18,7 +18,7 @@ export default [
       babel({
         exclude: 'node_modules/**',
       }),
-      uglify(),
+      // uglify(),
       scss({
         output: 'dist/bubbles.css',
       }),

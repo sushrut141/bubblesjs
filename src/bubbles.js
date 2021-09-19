@@ -75,3 +75,17 @@ Bubbles.prototype.viewAs = function(viewConfig) {
     viewBubble._updateViewConfig(viewConfig);
     return viewBubble;
 };
+
+Bubbles.prototype._pulseStart = function (data) {
+    for (let i = 0 ; i < this._children.length; i += 1) {
+        const childBubble = this._children[i];
+        childBubble._pulseStart(data);
+    }  
+};
+
+Bubbles.prototype._pulseEnd = function (data) {
+    for (let i = 0 ; i < this._children.length; i += 1) {
+        const childBubble = this._children[i];
+        childBubble._pulseEnd(data);
+    }  
+};

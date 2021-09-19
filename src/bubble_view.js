@@ -34,3 +34,16 @@ BubbleView.prototype._updateViewConfig = function(viewConfig) {
     });
 };
 
+BubbleView.prototype._pulseStart = function (data) {
+    for (let i = 0 ; i < this._children.length; i += 1) {
+        const childBubble = this._children[i];
+        childBubble._pulseStart(data);
+    }  
+};
+
+BubbleView.prototype._pulseEnd = function (data) {
+    for (let i = 0 ; i < this._children.length; i += 1) {
+        const childBubble = this._children[i];
+        childBubble._pulseEnd(data);
+    }  
+};

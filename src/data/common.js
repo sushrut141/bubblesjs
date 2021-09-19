@@ -232,3 +232,41 @@ export function prettifyNumber(number) {
     // TODO(sushruts) - add better logic to handle larger numbers.
     return number.toFixed(2);
 }
+
+/**
+ * Finds the row with the smallest value greater than or equal 
+ * to the target value specified for a given field.
+ * 
+ * @param {Array<Object>} sortedData Array of objects to visualize.
+ * @param {string} field FIeld whose value to read.
+ * @param {number} target Target value to compare against.
+ */
+export function bisectDataLeft(sortedData, field, target) {
+    const data = sortedData.filter(tup => isDefined(tup[field]));
+    let l = 0;
+    let r = data.length - 1;
+    while (l <= r) {
+        const mid = Math.floor((l + r) / 2);
+        const tuple = data[mid];
+        if (new Date(tuple[field]).getTime() > new Date(target).getTime()) {
+            r = mid - 1
+        } else {
+            l = mid + 1;
+        }
+    }
+    return data[r + 1];
+}
+
+/**
+ * Sorts the data by the specified field.
+ * 
+ * @param {Array<Object>} data Array of objects to visualize.
+ * @param {string} field Field to sort by.
+ */
+export function sortByField(data, field) {
+    return data.filter(tuple => isDefined(tuple[field])).sort((a, b) => {
+        const x = a[field]; 
+        const y = b[field];
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    });
+}

@@ -1,4 +1,4 @@
-import { getDataMapping, getFieldValues, getSeriesDataMapping, getTimeFieldRange, isDefined, isUndefined } from "../../data/common";
+import { bisectDataLeft, getDataMapping, getFieldValues, getSeriesDataMapping, getTemporalFieldData, getTimeFieldRange, isDefined, isUndefined, sortByField } from "../../data/common";
 import { getColorForIdx } from "../color";
 import { getAxisBounds, getMountPoint, getNumerixAxisBands, getTextDimensions } from "../common";
 import { createSVGElem } from "../svg_common";
@@ -24,13 +24,20 @@ export function LineChartView(params) {
     this._elem$ = undefined;
     this._tooltip$ = undefined;
     this._markers$ = undefined;
+    this._brushStart = [];
+    this._brushEnd = [];
+    this._brushInProgress = false;
+    this._brushElem$ = undefined;
+    this._brushPointsGroup$ = undefined;
     this._inactiveSeries = {};
+    this._sortedData = sortByField(this._data, this._viewConfig.channels['x']);
     this._render();
 }
 
 LineChartView.prototype.update = function (params) {
     if (isDefined(params.data)) {
         this._data = params.data;
+        this._sortedData = sortByField(this._data, this._viewConfig.channels['x']);
     }
     if (isDefined(params.viewConfig)) {
         this._viewConfig = params.viewConfig;
@@ -57,6 +64,7 @@ LineChartView.prototype._render = function () {
     // wait for chart to render before injecting tooltip
     setTimeout(() => {
         this._setupTooltip(this._elem$);
+        this._setupBrushing(this._elem$);
     }, 0);
 };
 
@@ -394,6 +402,86 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
     mount$.appendChild(yAxis$);
 };
 
+LineChartView.prototype._setupBrushing = function (mount$) {
+    const onMouseMove = (evt) => {
+        this._brushInProgress = true;
+        this._brushEnd = this._computeCanvasClickCoords(evt, mount$);
+        if (isDefined(this._brushEnd)) {
+            this._handleBrushing(mount$);
+        }
+    };
+    const onMouseUp = (evt) => {
+        this._brushEnd = this._computeCanvasClickCoords(evt, mount$);
+        mount$.removeEventListener('mousemove', onMouseMove);
+        mount$.removeEventListener('mouseup', onMouseUp);
+    };
+    mount$.addEventListener('mousedown', (evt) => {
+        this._brushStart = this._computeCanvasClickCoords(evt, mount$);
+        mount$.addEventListener('mousemove', onMouseMove);
+        mount$.addEventListener('mouseup', onMouseUp);
+    });
+    mount$.addEventListener('click', () => {
+        if (isDefined(this._brushElem$) && !this._brushInProgress) {
+            mount$.removeChild(this._brushElem$);
+            this._brushElem$ = undefined;
+        }
+        this._brushInProgress = false;
+    });
+};
+
+LineChartView.prototype._handleBrushing = function (mount$) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    if (isDefined(this._brushElem$)) {
+        const newWidth = this._brushEnd[0] - this._brushStart[0];
+        if (newWidth > 0) {
+            this._brushElem$.setAttribute('width', this._brushEnd[0] - this._brushStart[0]);
+        } else {
+            this._brushElem$.setAttribute('x', this._brushEnd[0]);
+            this._brushElem$.setAttribute('width', -newWidth);
+        }
+    } else {
+        const brush$ = createSVGElem('rect', {
+            x: this._brushStart[0],
+            y: 0.15 * height,
+            width: this._brushEnd[0] - this._brushStart[0],
+            height: 0.65 * height,
+            fill: 'rgba(204, 214, 235, 0.25)',
+        });
+        this._brushElem$ = brush$;
+        mount$.appendChild(this._brushElem$);
+    }
+    this._highlightBrushedPoints(mount$);
+};
+
+LineChartView.prototype._highlightBrushedPoints = function (mount$) {
+    const xField = this._viewConfig.channels['x'];
+    const width = this._viewConfig['width'];
+    const availableWidth = (0.9 * width) - 10;
+    const xRange = getTimeFieldRange(this._data, xField);
+    const xUnit = availableWidth / (xRange[1] - xRange[0]);
+    const xIdx = Math.floor(this._brushStart[0] / availableWidth * this._sortedData.length);
+    const target = this._sortedData[xIdx];
+    const tuple = bisectDataLeft(this._sortedData, xField, target[xField]);
+    console.log(tuple);
+};
+
+LineChartView.prototype._computeCanvasClickCoords = function (evt, mount$) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    let point = mount$.createSVGPoint();
+    point.x = evt.clientX;
+    point.y = evt.clientY;
+    point = point.matrixTransform(mount$.getScreenCTM().inverse());
+    if (point.x < 0.1 * width || point.x > width - 10) {
+        return;
+    }
+    if (point.y < 0.15 * height || point.y > 0.8 * height) {
+        return;
+    }
+    return [point.x, point.y];
+};
+
 LineChartView.prototype._setupTooltip = function (mount$) {
     const width = this._viewConfig.width;
     const height = this._viewConfig.height;
@@ -406,6 +494,9 @@ LineChartView.prototype._setupTooltip = function (mount$) {
         }
         if (isDefined(this._markers$) && mount$.contains(this._markers$)) {
             mount$.removeChild(this._markers$);
+        }
+        if (this._brushInProgress) {
+            return;
         }
         let point = mount$.createSVGPoint();
         point.x = evt.clientX;

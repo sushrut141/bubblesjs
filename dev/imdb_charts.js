@@ -64,7 +64,7 @@ const barChart = filterBubble.fork().transform([
     }),
 ]).viewAs({
     mount: '.barchart',
-    width: 800,
+    width: 700,
     height: 400,
     type: 'barchart',
     channels: {
@@ -86,8 +86,9 @@ const lineChart = filterBubble.fork().transform([
         };
     }),
 ]).viewAs({
+    title: 'Average Revenue over the years',
     mount: '.linechart',
-    width: 580,
+    width: 700,
     height: 400,
     type: 'linechart',
     channels: {

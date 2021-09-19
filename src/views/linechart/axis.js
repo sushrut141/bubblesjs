@@ -53,17 +53,20 @@ export function computeTimeAxis(params) {
         maximum,
         width,
     };
-    if (numOfYears >= 4) {
+    const parts = Math.ceil(width / 100);
+    if (numOfYears == 0) {
+        // less than or equal to one year
+        const numOfMonths = Object.keys(months);
+        if (numOfMonths >= 4) {
+            return computeMonthYearAxis(axisParams);
+        }
+        return computeDayMonthAxis(axisParams);
+    }
+    if (numOfYears == parts) {
         return computeYearAxis(axisParams);
-    } else if (numOfYears > 1 && numOfYears < 4) {
-        return computeMonthYearAxis(axisParams);
     }
-    // less than or equal to one year
-    const numOfMonths = Object.keys(months);
-    if (numOfMonths >= 4) {
-        return computeMonthYearAxis(axisParams);
-    }
-    return computeDayMonthAxis(axisParams);
+    return computeMonthYearAxis(axisParams);
+    
 }
 
 function computeYearAxis(axisParams) {
@@ -80,6 +83,8 @@ function computeYearAxis(axisParams) {
             position: currentPosition,
             label: year,
             value: currentValue,
+            stride,
+            timeStride: valueStride,
         });
     }
     return output;
@@ -101,6 +106,8 @@ function computeMonthYearAxis(axisParams) {
             position: currentPosition,
             label: `${month} ${year}`,
             value: currentValue,
+            stride,
+            timeStride: valueStride,
         });
     }
     return output;
@@ -122,6 +129,8 @@ function computeDayMonthAxis(axisParams) {
             position: currentPosition,
             label: `${day} ${month}`,
             value: currentValue,
+            stride,
+            timeStride: valueStride,
         });
     }
     return output;

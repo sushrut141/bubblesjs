@@ -254,7 +254,7 @@ export function bisectDataLeft(sortedData, field, target) {
             l = mid + 1;
         }
     }
-    return data[r + 1];
+    return r + 1;
 }
 
 /**

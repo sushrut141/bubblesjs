@@ -222,10 +222,6 @@ LineChartView.prototype._onSeriesLegendClick = function (evt) {
         this._inactiveSeries[series] = true;
     }
     this._render();
-    this._updateParentBubble();
-};
-
-LineChartView.prototype._updateParentBubble = function () {
     const newData = [];
     for (let i = 0; i < this._data.length; i += 1) {
         const tuple = this._data[i];
@@ -234,6 +230,10 @@ LineChartView.prototype._updateParentBubble = function () {
             newData.push(tuple);
         }
     }
+    this._updateParentBubble(newData);
+};
+
+LineChartView.prototype._updateParentBubble = function (newData) {
     for (let i = 0; i < this._bubbleView._children.length; i += 1) {
         const childBubble = this._bubbleView._children[i];
         childBubble.update(newData);
@@ -423,14 +423,16 @@ LineChartView.prototype._setupBrushing = function (mount$) {
     mount$.addEventListener('click', () => {
         if (isDefined(this._brushElem$) && !this._brushInProgress) {
             mount$.removeChild(this._brushElem$);
+            mount$.removeChild(this._brushPointsGroup$);
+            this._brushPointsGroup$ = undefined;
             this._brushElem$ = undefined;
+            this._updateParentBubble(this._sortedData);
         }
         this._brushInProgress = false;
     });
 };
 
 LineChartView.prototype._handleBrushing = function (mount$) {
-    const width = this._viewConfig.width;
     const height = this._viewConfig.height;
     if (isDefined(this._brushElem$)) {
         const newWidth = this._brushEnd[0] - this._brushStart[0];
@@ -455,15 +457,55 @@ LineChartView.prototype._handleBrushing = function (mount$) {
 };
 
 LineChartView.prototype._highlightBrushedPoints = function (mount$) {
-    const xField = this._viewConfig.channels['x'];
     const width = this._viewConfig['width'];
+    const height = this._viewConfig['height'];
+    const xField = this._viewConfig.channels['x'];
+    const yField = this._viewConfig.channels['y'];
+    const yBase = (0.2 * height);
     const availableWidth = (0.9 * width) - 10;
+    const availableHeight = (0.65 * height);
+    const bands = getNumerixAxisBands(availableHeight);
     const xRange = getTimeFieldRange(this._data, xField);
-    const xUnit = availableWidth / (xRange[1] - xRange[0]);
-    const xIdx = Math.floor(this._brushStart[0] / availableWidth * this._sortedData.length);
-    const target = this._sortedData[xIdx];
-    const tuple = bisectDataLeft(this._sortedData, xField, target[xField]);
-    console.log(tuple);
+    const [yStart, yEnd] = getAxisBounds({
+        data: this._data,
+        field: yField,
+        bands,
+    });
+    const yUnit = availableHeight / (yEnd - yStart);
+    const xInvUnit = (xRange[1] - xRange[0]) / availableWidth;
+    const scaledStart = this._brushStart[0] - (0.1 * width);
+    const scaledEnd = this._brushEnd[0] - (0.1 * width);
+    const targetStartTime = xRange[0] + (xInvUnit * scaledStart);
+    const targetEndTime = xRange[0] + (xInvUnit * scaledEnd);
+    const startIdx = bisectDataLeft(this._sortedData, xField, targetStartTime);
+    const endIdx = bisectDataLeft(this._sortedData, xField, targetEndTime);
+    const markers$ = createSVGElem('g', { class: 'bubbles bubbles-brush-markers' });
+    const newData = [];
+    for (let i = startIdx; i < endIdx; i += 1) {
+        const tuple = this._sortedData[i];
+        const xVal = new Date(tuple[xField]).getTime();
+        const yVal = tuple[yField];
+        const xPos = (xVal / xInvUnit) + (0.1 * width) - (xRange[0] / xInvUnit);
+        const yPos = height - (yVal * yUnit) - yBase;
+        const circle$ = createSVGElem('circle', {
+            cx: xPos,
+            cy: yPos,
+            r: 4,
+            fill: getColorForIdx(0),
+            stroke: '#ffffff',
+        });
+        markers$.appendChild(circle$);
+        newData.push(tuple);
+    }
+    if (this._brushPointsGroup$ && mount$.contains(this._brushPointsGroup$)) {
+        mount$.removeChild(this._brushPointsGroup$);
+    }
+    this._brushPointsGroup$ = markers$;
+    mount$.appendChild(this._brushPointsGroup$);
+    // update child bubbles
+    for (let i = 0; i < this._bubbleView._children.length; i += 1) {
+        this._bubbleView._children[i].update(newData);
+    }
 };
 
 LineChartView.prototype._computeCanvasClickCoords = function (evt, mount$) {

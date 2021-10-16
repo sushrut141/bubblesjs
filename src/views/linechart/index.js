@@ -31,6 +31,7 @@ export function LineChartView(params) {
     this._brushPointsGroup$ = undefined;
     this._inactiveSeries = {};
     this._sortedData = sortByField(this._data, this._viewConfig.channels['x']);
+    this._computedYAxisWidth = 0;
     this._render();
 }
 
@@ -114,7 +115,7 @@ LineChartView.prototype._createLineChartView = function (mount$) {
     const xField = this._viewConfig.channels['x'];
     const yField = this._viewConfig.channels['y'];
     const dataMatrix = getDataMapping(this._data, xField, yField);
-    const availableWidth = (0.9 * width) - 10;
+    const availableWidth = (width - this._computedYAxisWidth) - 10;
     const availableHeight = (0.65 * height);
     const bands = getNumerixAxisBands(availableHeight);
     const [xStart, xEnd] = getTimeFieldRange(this._data, xField);
@@ -125,7 +126,7 @@ LineChartView.prototype._createLineChartView = function (mount$) {
     });
     const xUnit = availableWidth / (xEnd - xStart);
     const yUnit = availableHeight / (yEnd - yStart);
-    const xBase = (0.1 * width);
+    const xBase = (this._computedYAxisWidth);
     const yBase = (0.2 * height);
     const series$ = createSVGElem('g', { class: 'bubbles-line-series' });
     const sortedData = this._data.filter(obj => isDefined(obj[xField])).sort(function(a, b) {
@@ -248,7 +249,7 @@ LineChartView.prototype._createLineSeries = function (mount$) {
     const color = this._viewConfig.channels['color'];
     const seriesValues = getFieldValues(this._data, color);
     const dataMatrix = getSeriesDataMapping(this._data, xField, yField, color);
-    const availableWidth = (0.9 * width) - 10;
+    const availableWidth = (width - this._computedYAxisWidth) - 10;
     const availableHeight = (0.65 * height);
     const bands = getNumerixAxisBands(availableHeight);
     const [xStart, xEnd] = getTimeFieldRange(this._data, xField);
@@ -259,7 +260,7 @@ LineChartView.prototype._createLineSeries = function (mount$) {
     });
     const xUnit = availableWidth / (xEnd - xStart);
     const yUnit = availableHeight / (yEnd - yStart);
-    const xBase = (0.1 * width);
+    const xBase = (this._computedYAxisWidth);
     const yBase = (0.2 * height);
     const series$ = createSVGElem('g', { class: 'bubbles-line-series' });
     const sortedData = this._data.filter(obj => isDefined(obj[xField])).sort(function(a, b) {
@@ -312,8 +313,8 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
     const width = this._viewConfig.width;
     const height = this._viewConfig.height;
     const xField = this._viewConfig.channels['x'];
-    const base = 0.1 * width;
-    const availableWidth = (width * 0.9) - 10;
+    const base = this._computedYAxisWidth;
+    const availableWidth = (width - this._computedYAxisWidth) - 10;
     const axisLabels = computeTimeAxis({
         width: availableWidth,
         data: this._data,
@@ -368,19 +369,31 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
     });
     const valueStride = (rangeEnd - rangeStart) / bands;
     const posistionStride = (65 / bands);
+    const yAxisLabelXOffset = 24;
+    let axisWidth = 0;
+    
+    // calculate widths of ticks and compute x offset for axis ticks
+    for (let i = 0; i <= bands; i += 1) {
+        const value = (rangeEnd - (i * valueStride)).toLocaleString();
+        const textDimensions = getTextDimensions(value, '11px sans-serif');
+        const computedWidth = textDimensions.width + yAxisLabelXOffset + 16;
+        axisWidth = Math.max(axisWidth, computedWidth);
+    }
     for (let i = 0; i <= bands; i += 1) {
         const position = 15 + (i * posistionStride);
-        const value = rangeEnd - (i * valueStride);
+        const value = (rangeEnd - (i * valueStride)).toLocaleString();
         // grid lines start from 10% mark
-        const gridLineStartX = width * 0.1;
+        const gridLineStartX = axisWidth;
         // TODO(sushrut) - use computed styles to get the tick characters actual width and height
         const gridLineY = position * height / 100;
         const gridLineEndX = width - 10;
-        const labelY = ((position * height / 100) + 5) / height * 100; // center label of height 11px by adding approx half its height(5px) to position
+        // center label of height 11px by adding approx half its height(6px) to position
+        const labelY = ((position * height / 100) + 4) / height * 100;
         const axisTick$ = createSVGElem('text', {
             style: 'color:#666666;cursor:default;font-size:11px;fill:#666666;',
             'text-anchor': 'end',
-            x: '7%',
+            // leave space between axis tick and grid line
+            x: `${axisWidth - 8}`,
             y: `${labelY}%`,
         }, value);
         const gridLine$ = createSVGElem('path', {
@@ -394,9 +407,10 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
     const yAxisLabel$ = createSVGElem('text', {
         class: 'bubbles-chart-axis-title',
         style: 'color:#666666;fill:#666666;',
-        'text-anchor': 'middle',
-        transform: `translate(${0.035 * width * 2 / 3}, ${0.45 * height}) rotate(-90)`,
+        'text-anchor': 'start',
+        transform: `translate(${yAxisLabelXOffset}, ${0.45 * height}) rotate(-90)`,
     }, yField);
+    this._computedYAxisWidth = axisWidth;
     yAxis$.appendChild(yAxisLabel$);
     mount$.appendChild(yGridLines$);
     mount$.appendChild(yAxis$);
@@ -462,7 +476,7 @@ LineChartView.prototype._highlightBrushedPoints = function (mount$) {
     const xField = this._viewConfig.channels['x'];
     const yField = this._viewConfig.channels['y'];
     const yBase = (0.2 * height);
-    const availableWidth = (0.9 * width) - 10;
+    const availableWidth = (width - this._computedYAxisWidth) - 10;
     const availableHeight = (0.65 * height);
     const bands = getNumerixAxisBands(availableHeight);
     const xRange = getTimeFieldRange(this._data, xField);
@@ -473,8 +487,8 @@ LineChartView.prototype._highlightBrushedPoints = function (mount$) {
     });
     const yUnit = availableHeight / (yEnd - yStart);
     const xInvUnit = (xRange[1] - xRange[0]) / availableWidth;
-    const scaledStart = this._brushStart[0] - (0.1 * width);
-    const scaledEnd = this._brushEnd[0] - (0.1 * width);
+    const scaledStart = this._brushStart[0] - (this._computedYAxisWidth);
+    const scaledEnd = this._brushEnd[0] - (this._computedYAxisWidth);
     const targetStartTime = xRange[0] + (xInvUnit * scaledStart);
     const targetEndTime = xRange[0] + (xInvUnit * scaledEnd);
     const startIdx = bisectDataLeft(this._sortedData, xField, targetStartTime);
@@ -485,7 +499,7 @@ LineChartView.prototype._highlightBrushedPoints = function (mount$) {
         const tuple = this._sortedData[i];
         const xVal = new Date(tuple[xField]).getTime();
         const yVal = tuple[yField];
-        const xPos = (xVal / xInvUnit) + (0.1 * width) - (xRange[0] / xInvUnit);
+        const xPos = (xVal / xInvUnit) + (this._computedYAxisWidth) - (xRange[0] / xInvUnit);
         const yPos = height - (yVal * yUnit) - yBase;
         const circle$ = createSVGElem('circle', {
             cx: xPos,
@@ -515,7 +529,7 @@ LineChartView.prototype._computeCanvasClickCoords = function (evt, mount$) {
     point.x = evt.clientX;
     point.y = evt.clientY;
     point = point.matrixTransform(mount$.getScreenCTM().inverse());
-    if (point.x < 0.1 * width || point.x > width - 10) {
+    if (point.x < this._computedYAxisWidth || point.x > width - 10) {
         return;
     }
     if (point.y < 0.15 * height || point.y > 0.8 * height) {
@@ -544,7 +558,7 @@ LineChartView.prototype._setupTooltip = function (mount$) {
         point.x = evt.clientX;
         point.y = evt.clientY;
         point = point.matrixTransform(mount$.getScreenCTM().inverse());
-        if (point.x < 0.1 * width || point.x > width - 10) {
+        if (point.x < this._computedYAxisWidth || point.x > width - 10) {
             return;
         }
         if (point.y < 0.15 * height || point.y > 0.8 * height) {
@@ -553,13 +567,13 @@ LineChartView.prototype._setupTooltip = function (mount$) {
         const baseX = point.x;
         const baseY = point.y;
         // subtract space used by y axis
-        let x = baseX - (0.1 * width);
+        let x = baseX - (this._computedYAxisWidth);
         const y = baseY;
         const tooltip = new Tooltip({
             xField,
             yField,
             series,
-            width: (0.9 * width) - 10,
+            width: (width - this._computedYAxisWidth) - 10,
             data: this._data,
             inactiveSeries: this._inactiveSeries,
         });
@@ -580,7 +594,7 @@ LineChartView.prototype._drawTooltipMarkers = function (mount$, tooltipData) {
     const height = this._viewConfig.height;
     const xField = this._viewConfig.channels['x'];
     const yField = this._viewConfig.channels['y'];
-    const availableWidth = (0.9 * width) - 10;
+    const availableWidth = (width - this._computedYAxisWidth) - 10;
     const availableHeight = (0.65 * height);
     const bands = getNumerixAxisBands(availableHeight);
     const [xStart, xEnd] = getTimeFieldRange(this._data, xField);
@@ -591,7 +605,7 @@ LineChartView.prototype._drawTooltipMarkers = function (mount$, tooltipData) {
     });
     const xUnit = availableWidth / (xEnd - xStart);
     const yUnit = availableHeight / (yEnd - yStart);
-    const xBase = (0.1 * width);
+    const xBase = (this._computedYAxisWidth);
     const yBase = (0.2 * height);
     const values = tooltipData.markerValues;
     const xVal = new Date(tooltipData.xVal).getTime();

@@ -35,6 +35,10 @@ BubbleView.prototype._updateViewConfig = function(viewConfig) {
 };
 
 BubbleView.prototype._pulseStart = function (data) {
+    // update data to pulsed data
+    this._view.update({
+        data,
+    });
     for (let i = 0 ; i < this._children.length; i += 1) {
         const childBubble = this._children[i];
         childBubble._pulseStart(data);
@@ -42,6 +46,10 @@ BubbleView.prototype._pulseStart = function (data) {
 };
 
 BubbleView.prototype._pulseEnd = function (data) {
+    // reset data to main data
+    this._view.update({
+        data: this._data,
+    });
     for (let i = 0 ; i < this._children.length; i += 1) {
         const childBubble = this._children[i];
         childBubble._pulseEnd(data);

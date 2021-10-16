@@ -21,7 +21,10 @@ export function BarChartView(params) {
     this._viewConfig = params.viewConfig;
     this._bubbleView = params.bubbleView;
     this._elem$ = undefined;
+    this._brushInProgress = false;
+    this._brushElem$ = undefined;
     this._tooltip$ = undefined;
+    this._computedYAxisWidth = 0;
     this._inactiveSeries = {};
     this._render();
 }
@@ -56,6 +59,7 @@ BarChartView.prototype._render = function () {
     // wait for chart to render before injecting tooltip
     setTimeout(() => {
         this._setupTooltip(this._elem$);
+        this._setupBrushing(this._elem$);
     }, 0);
 };
 
@@ -96,7 +100,7 @@ BarChartView.prototype._createBars = function (mount$) {
     const height = this._viewConfig.height;
     const xField = this._viewConfig.channels['x'];
     const yField = this._viewConfig.channels['y'];
-    const availableWidth = (width * 0.9) - 10;
+    const availableWidth = (width - this._computedYAxisWidth) - 10;
     const xFieldValues = getFieldValues(this._data, xField);
     const chunk = availableWidth / xFieldValues.length;
     const availableHeight = height * 0.65;
@@ -110,7 +114,7 @@ BarChartView.prototype._createBars = function (mount$) {
     const dataMatrix = this._createValueMapping(xField, yField);
     const perUnitHeight = (0.65 * height) / (rangeEnd - rangeStart);
     // 10% space allocated for y axis
-    const base = 0.1 * width;
+    const base = this._computedYAxisWidth;
     const bars$ = createSVGElem('g', { class: 'bubbles-barchart-bars' });
     // for each band
     for (let j = 0; j < xFieldValues.length; j += 1) {
@@ -228,10 +232,7 @@ BarChartView.prototype._onSeriesLegendClick = function (evt) {
         this._inactiveSeries[series] = true;
     }
     this._render();
-    this._updateParentBubble();
-};
-
-BarChartView.prototype._updateParentBubble = function () {
+    // get affected data and update child bubbles of parent bubble view
     const newData = [];
     for (let i = 0; i < this._data.length; i += 1) {
         const tuple = this._data[i];
@@ -240,6 +241,10 @@ BarChartView.prototype._updateParentBubble = function () {
             newData.push(tuple);
         }
     }
+    this._updateParentBubble();
+};
+
+BarChartView.prototype._updateParentBubble = function (newData) {
     for (let i = 0; i < this._bubbleView._children.length; i += 1) {
         const childBubble = this._bubbleView._children[i];
         childBubble.update(newData);
@@ -252,7 +257,7 @@ BarChartView.prototype._createBarSeries = function (mount$) {
     const xField = this._viewConfig.channels['x'];
     const yField = this._viewConfig.channels['y'];
     const color = this._viewConfig.channels['color'];
-    const availableWidth = (width * 0.9) - 10;
+    const availableWidth = (width - this._computedYAxisWidth) - 10;
     const xFieldValues = getFieldValues(this._data, xField);
     const chunk = availableWidth / xFieldValues.length;
     const colorValues = getFieldValues(this._data, color);
@@ -279,7 +284,7 @@ BarChartView.prototype._createBarSeries = function (mount$) {
     const dataMatrix = this._createSeriesValueMapping(color, xField, yField);
     const perUnitHeight = (0.65 * height) / (rangeEnd - rangeStart);
     // 10% space allocated for y axis
-    const base = 0.1 * width;
+    const base = this._computedYAxisWidth;
     // half the chunk width will be used for white space
     // quarter chunk on each side
     // rest of the space is equally divided among series
@@ -341,11 +346,20 @@ BarChartView.prototype._createChartYAxis = function (mount$) {
     });
     const valueStride = (rangeEnd - rangeStart) / bands;
     const posistionStride = (65 / bands);
+    const yAxisLabelXOffset = 24;
+    let axisWidth = 0;
+    // calculate widths of ticks and compute x offset for axis ticks
+    for (let i = 0; i <= bands; i += 1) {
+        const value = (rangeEnd - (i * valueStride)).toLocaleString();
+        const textDimensions = getTextDimensions(value, '11px sans-serif');
+        const computedWidth = textDimensions.width + yAxisLabelXOffset + 16;
+        axisWidth = Math.max(axisWidth, computedWidth);
+    }
     for (let i = 0; i <= bands; i += 1) {
         const position = 15 + (i * posistionStride);
-        const value = rangeEnd - (i * valueStride);
-        // grid lines start from 10% mark
-        const gridLineStartX = width * 0.1;
+        const value = (rangeEnd - (i * valueStride)).toLocaleString();
+        // grid lines start where axis ends
+        const gridLineStartX = axisWidth;
         // TODO(sushrut) - use computed styles to get the tick characters actual width and height
         const gridLineY = position * height / 100;
         const labelY = ((position * height / 100) + 5) / height * 100; // center label of height 11px by adding approx half its height(5px) to position
@@ -353,7 +367,8 @@ BarChartView.prototype._createChartYAxis = function (mount$) {
         const axisTick$ = createSVGElem('text', {
             style: 'color:#666666;cursor:default;font-size:11px;fill:#666666;',
             'text-anchor': 'end',
-            x: '7%',
+            // leave space between axis tick and grid line
+            x: `${axisWidth - 8}`,
             y: `${labelY}%`,
         }, value);
         const gridLine$ = createSVGElem('path', {
@@ -367,9 +382,10 @@ BarChartView.prototype._createChartYAxis = function (mount$) {
     const yAxisLabel$ = createSVGElem('text', {
         class: 'bubbles-chart-axis-title',
         style: 'color:#666666;fill:#666666;',
-        'text-anchor': 'middle',
-        transform: `translate(${0.035 * width}, ${0.45 * height}) rotate(-90)`,
+        'text-anchor': 'start',
+        transform: `translate(${yAxisLabelXOffset}, ${0.45 * height}) rotate(-90)`,
     }, yField);
+    this._computedYAxisWidth = axisWidth;
     yAxis$.appendChild(yAxisLabel$);
     mount$.appendChild(yGridLines$);
     mount$.appendChild(yAxis$);
@@ -379,13 +395,13 @@ BarChartView.prototype._createChartXAxis = function (mount$) {
     const width = this._viewConfig.width;
     const height = this._viewConfig.height;
     const xField = this._viewConfig.channels['x'];
-    const availableWidth = (width * 0.9) - 10;
+    const availableWidth = (width - this._computedYAxisWidth) - 10;
     const domain = getFieldValues(this._data, xField);
     const chunk = availableWidth / domain.length;
     const xAxis$ = createSVGElem('g', { class: 'bubbles-barchart-x-axis' });
     const highlightBands$ = createSVGElem('g', { class: 'bubbles-barchart-x-axisband' });
     // 10% space allocated for y axis
-    const base = 0.1 * width;
+    const base = this._computedYAxisWidth;
     for (let i = 0; i < domain.length; i += 1) {
         const positionX = base + ((i + 1) * chunk) - (chunk / 2);
         const bandYStart = (height * 0.8);
@@ -424,7 +440,7 @@ BarChartView.prototype._setupTooltip = function (mount$) {
         point.x = evt.clientX;
         point.y = evt.clientY;
         point = point.matrixTransform(mount$.getScreenCTM().inverse());
-        if (point.x < 0.1 * width || point.x > width - 10) {
+        if (point.x < this._computedYAxisWidth || point.x > width - 10) {
             return;
         }
         if (point.y < 0.15 * height || point.y > 0.8 * height) {
@@ -433,13 +449,13 @@ BarChartView.prototype._setupTooltip = function (mount$) {
         const baseX = point.x;
         const baseY = point.y;
         // subtract space used by y axis
-        let x = baseX - (0.1 * width);
+        let x = baseX - (this._computedYAxisWidth);
         const y = baseY;
         const tooltip = new Tooltip({
             xField,
             yField,
             series,
-            width: (0.9 * width) - 10,
+            width: (width - this._computedYAxisWidth) - 10,
             data: this._data,
             inactiveSeries: this._inactiveSeries,
         });
@@ -452,4 +468,101 @@ BarChartView.prototype._setupTooltip = function (mount$) {
         this._tooltip$.setAttribute('transform', `translate(${tooltipX}, ${baseY})`);
         mount$.appendChild(this._tooltip$);
     });
+};
+
+BarChartView.prototype._computeCanvasClickCoords = function (evt, mount$) {
+    const width = this._viewConfig.width;
+    const height = this._viewConfig.height;
+    let point = mount$.createSVGPoint();
+    point.x = evt.clientX;
+    point.y = evt.clientY;
+    point = point.matrixTransform(mount$.getScreenCTM().inverse());
+    if (point.x < this._computedYAxisWidth || point.x > width - 10) {
+        return;
+    }
+    if (point.y < 0.15 * height || point.y > 0.8 * height) {
+        return;
+    }
+    return [point.x, point.y];
+};
+
+BarChartView.prototype._setupBrushing = function (mount$) {
+    const onMouseMove = (evt) => {
+        this._brushInProgress = true;
+        this._brushEnd = this._computeCanvasClickCoords(evt, mount$);
+        if (isDefined(this._brushEnd)) {
+            this._handleBrushing(mount$);
+        }
+    };
+    const onMouseUp = (evt) => {
+        this._brushEnd = this._computeCanvasClickCoords(evt, mount$);
+        mount$.removeEventListener('mousemove', onMouseMove);
+        mount$.removeEventListener('mouseup', onMouseUp);
+        this._highlightBrushedBars(mount$);
+    };
+    mount$.addEventListener('mousedown', (evt) => {
+        this._brushStart = this._computeCanvasClickCoords(evt, mount$);
+        mount$.addEventListener('mousemove', onMouseMove);
+        mount$.addEventListener('mouseup', onMouseUp);
+    });
+    mount$.addEventListener('click', () => {
+        if (isDefined(this._brushElem$) && !this._brushInProgress) {
+            mount$.removeChild(this._brushElem$);
+            this._brushElem$ = undefined;
+            this._updateParentBubble(this._data);
+        }
+        this._brushInProgress = false;
+    });
+};
+
+BarChartView.prototype._handleBrushing = function (mount$) {
+    const height = this._viewConfig.height;
+    if (isDefined(this._brushElem$)) {
+        const newWidth = this._brushEnd[0] - this._brushStart[0];
+        if (newWidth > 0) {
+            this._brushElem$.setAttribute('width', this._brushEnd[0] - this._brushStart[0]);
+        } else {
+            this._brushElem$.setAttribute('x', this._brushEnd[0]);
+            this._brushElem$.setAttribute('width', -newWidth);
+        }
+    } else {
+        const brush$ = createSVGElem('rect', {
+            x: this._brushStart[0],
+            y: 0.15 * height,
+            width: this._brushEnd[0] - this._brushStart[0],
+            height: 0.65 * height,
+            fill: 'rgba(204, 214, 235, 0.25)',
+        });
+        this._brushElem$ = brush$;
+        mount$.appendChild(this._brushElem$);
+    }
+    // this._highlightBrushedBars(mount$);
+};
+
+BarChartView.prototype._highlightBrushedBars = function (mount$) {
+    const width = this._viewConfig.width;
+    const xField = this._viewConfig.channels['x'];
+    const availableWidth = (width - this._computedYAxisWidth) - 10;
+    const xBase = (this._computedYAxisWidth);
+    const domain = getFieldValues(this._data, xField);
+    const bandWidth = availableWidth / domain.length;
+    // compute ideal wrapping width
+    const bandStartIdx =  Math.floor((this._brushStart[0] - xBase) / bandWidth);
+    const bandEndIdx = Math.ceil((this._brushEnd[0] - xBase) / bandWidth);
+    const xStart = bandStartIdx * bandWidth;
+    const xEnd = bandEndIdx * bandWidth;
+    this._brushElem$.setAttribute('x', xBase + xStart);
+    this._brushElem$.setAttribute('width', xEnd - xStart);
+    const targetValuesMap = {};
+    for (let i = bandStartIdx; i < bandEndIdx; i += 1) {
+        targetValuesMap[domain[i]] = true;
+    }
+    const brushedData = [];
+    for (let i = 0; i < this._data.length; i += 1) {
+        const tuple = this._data[i];
+        if (isDefined(tuple[xField]) && targetValuesMap[tuple[xField]]) {
+            brushedData.push(tuple);
+        }
+    }
+    this._updateParentBubble(brushedData);
 };

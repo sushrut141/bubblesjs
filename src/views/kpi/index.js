@@ -35,7 +35,7 @@ KPIView.prototype._render = function () {
     if (this._elem$ && root$.contains(this._elem$)) {
         root$.removeChild(this._elem$);
     }
-    const value = prettifyNumber(this._viewConfig.compute(this._data));
+    const value = this._viewConfig.compute(this._data).toLocaleString();
     const elem$ = createElem('div', { class: 'bubbles-kpi-view' });
     const label$ = createElem('h4', { class: 'bubbles-kpi-label' }, this._label);
     const value$ = createElem('h2', { class: 'bubbles-kpi-value' }, value);

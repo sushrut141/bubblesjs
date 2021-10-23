@@ -371,7 +371,6 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
     const posistionStride = (65 / bands);
     const yAxisLabelXOffset = 24;
     let axisWidth = 0;
-    
     // calculate widths of ticks and compute x offset for axis ticks
     for (let i = 0; i <= bands; i += 1) {
         const value = (rangeEnd - (i * valueStride)).toLocaleString();
@@ -407,7 +406,7 @@ LineChartView.prototype._createChartXAxis = function (mount$) {
     const yAxisLabel$ = createSVGElem('text', {
         class: 'bubbles-chart-axis-title',
         style: 'color:#666666;fill:#666666;',
-        'text-anchor': 'start',
+        'text-anchor': 'middle',
         transform: `translate(${yAxisLabelXOffset}, ${0.45 * height}) rotate(-90)`,
     }, yField);
     this._computedYAxisWidth = axisWidth;

@@ -382,7 +382,7 @@ BarChartView.prototype._createChartYAxis = function (mount$) {
     const yAxisLabel$ = createSVGElem('text', {
         class: 'bubbles-chart-axis-title',
         style: 'color:#666666;fill:#666666;',
-        'text-anchor': 'start',
+        'text-anchor': 'middle',
         transform: `translate(${yAxisLabelXOffset}, ${0.45 * height}) rotate(-90)`,
     }, yField);
     this._computedYAxisWidth = axisWidth;

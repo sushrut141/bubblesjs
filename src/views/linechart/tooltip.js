@@ -75,46 +75,60 @@ Tooltip.prototype.getTooltipForCoords = function (x, y) {
     let maxWidth = 0;
     const keyWidths = [];
     for (let i = 0; i < series.length; i += 1) {
-        const keyDimensions = getTextDimensions(`${series[i]}:`, '11px sans-serif');
-        const valueDimensions = getTextDimensions(values[series[i]], 'bold 11px sans-serif');
+        const value = (values[series[i]]).toLocaleString();
+        const keyDimensions = getTextDimensions(`${series[i]}:`, '14px sans-serif');
+        const valueDimensions = getTextDimensions(value, '14px sans-serif');
         maxKeyWidth = Math.max(maxKeyWidth, keyDimensions.width);
         maxWidth = Math.max(maxWidth, timeLabelDimensions.width, maxKeyWidth + valueDimensions.width + 10);
         keyWidths.push(keyDimensions.width);
     }
-    const rows$ = createSVGElem('g', { class: 'bubbles bubbles-tooltip-rows' });
     const timeLabel$ = createSVGElem('text', {
-        style: 'font-size:12px;'
+        'x': 8,
+        'y': 8, 
+        'style': 'font-size:12px;fill:#989292'
     }, xVal);
+    const divider$ = createSVGElem('path', {
+        'd': `M 8 16 L ${maxWidth + 8} 16`,
+        'stroke': 'rgb(202 193 193)',
+        'fill': 'none',
+    });
+    const rows$ = createSVGElem('g', {
+        class: 'bubbles bubbles-tooltip-rows',
+        'transform': 'translate(8, 18)',
+    });
     for (let i = 0; i < series.length; i += 1) {
         const seriesKey = series[i];
         const row$ = createSVGElem('text', {
-            'transform': `translate(0,${(i + 1) * 15})`,
+            'transform': `translate(0,${(i + 1) * 18})`,
         });
+        const value = (values[seriesKey]).toLocaleString();
         const field$ = createSVGElem('tspan', {
-            style: 'font-size:11px;color:rgb(95, 95, 95);'
+            style: 'font-size:14px;color:rgb(95, 95, 95);'
         }, `${seriesKey}:`);
         const value$ = createSVGElem('tspan', {
             'dx': maxKeyWidth + 10 - keyWidths[i],
-            'style': 'font-size:11px;font-weight:bold;color:rgb(95, 95, 95);'
-        }, values[seriesKey]);
+            'style': 'font-size:14px;color:rgb(95, 95, 95);'
+        }, value);
         row$.appendChild(field$);
         row$.appendChild(value$);
         rows$.appendChild(row$);
     }
     const border$ = createSVGElem('rect', {
-        x: -5,
-        y: -12,
-        width: maxWidth + 10,
-        height: ((series.length + 1) * 12) + 12,
-        style: 'fill:rgba(255, 255, 255, 0.9);stroke:rgb(232, 232, 232);',
+        'x': -5,
+        'y': -12,
+        'width': maxWidth + 32,
+        'height': ((series.length + 1) * 18) + 24,
+        'style': 'fill:rgb(255, 255, 255);stroke:rgb(232, 232, 232);',
+        'rx': 4,
     });
     tooltip$.appendChild(border$);
     tooltip$.appendChild(timeLabel$);
+    tooltip$.appendChild(divider$);
     tooltip$.appendChild(rows$);
     return {
         tooltip$: tooltip$,
         xVal: xVal,
         markerValues: values,
-        width: maxWidth + 10,
+        width: maxWidth + 32,
     };
 };

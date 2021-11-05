@@ -1,4 +1,4 @@
-import { getDataRangeForValue, getFieldValues, getTemporalFieldData, isDefined, isUndefined } from "../../data/common";
+import { getDataRangeForValue, getFieldValues, getTemporalFieldData, getTimeFieldRange, isDefined, isUndefined } from "../../data/common";
 import { getTextDimensions } from "../common";
 import { createSVGElem } from "../svg_common";
 
@@ -15,10 +15,13 @@ import { createSVGElem } from "../svg_common";
 export function Tooltip(params) {
     this._xField = params.xField;
     this._yField = params.yField;
-    this._data = params.data.filter(tuple => isDefined(tuple[this._xField])).sort((a, b) => {
-        const x = a[this._xField]; 
-        const y = b[this._xField];
-        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    this._data = params.data
+    .filter(tuple => isDefined(tuple[this._xField]))
+    .map((tuple) => {
+        return {
+            ...tuple,
+            [this._xField]: new Date(tuple[this._xField]).getTime(),
+        };
     });
     this._series = params.series;
     this._inactiveSeries = params.inactiveSeries;
@@ -30,7 +33,7 @@ export function Tooltip(params) {
 }
 
 Tooltip.prototype._init = function () {
-    this._xRange = getTemporalFieldData(this._data, this._xField);
+    this._xRange = this._data.map(tuple => tuple[this._xField]);
     if (isDefined(this._series)) {
         this._seriesRange = getFieldValues(this._data, this._series);
     }
@@ -41,8 +44,10 @@ Tooltip.prototype.getTooltipForCoords = function (x, y) {
     let xVal = undefined;
     const tooltip$ = createSVGElem('g', { class: 'bubbles-linechart-tooltip' });
     let highlightedData = [];
-    const xIdx = Math.floor(x / this._width * this._xRange.length);
-    const target = this._xRange[xIdx];
+
+    const [xStart, xEnd] = getTimeFieldRange(this._data, this._xField);
+    const unit = ((xEnd - xStart) / this._width);
+    const target = Math.floor(xStart + (unit * x));
     const tuples = getDataRangeForValue(this._data, this._xField, target);
     if (isDefined(this._series)) {
         for (let i = 0; i < tuples.length; i += 1) {

@@ -184,44 +184,60 @@ export function getDataMapping(data, xField, yField) {
 }
 
 /**
- * Computes the list of tuples whose field equals a target value.
- * @param {Array<Object>} sortedData Sorted Data array.
- * @param {string} field Field whose value to find.
- * @param {number} target Target value to find.
+ * Gets the list of values that are either equal to the target or
+ * the list of largest value tuples less than the target.
+ * 
+ * @param {Array<Object>} sortedData Data tuples.
+ * @param {String} field The data field.
+ * @param {Number} targetValue Target value to find.
+ * @returns 
  */
-export function getDataRangeForValue(sortedData, field, target) {
-    const filtered = sortedData.filter(tuple => isDefined(tuple[field]));
-    let startIdx = undefined;
-    let endIdx = undefined;
+export function getDataRangeForValue(sortedData, field, targetValue) {
+    const data = sortedData.filter(tuple => isDefined(tuple[field]));
+    // find the largest value <= target
     let start = 0;
-    let end = filtered.length - 1;
+    let end = data.length - 1;
+    // 0 1 1 1 3
     while (start <= end) {
         const mid = Math.floor((start + end) / 2);
-        const tuple = filtered[mid];
-        if (new Date(tuple[field]).getTime() > target) {
-            end  = mid - 1
-        } else {
-            start = mid + 1;
-        }
-    }
-    endIdx = start - 1;
-    start = 0;
-    end = filtered.length - 1;
-    while (start <= end) {
-        const mid = Math.floor((start + end) / 2);
-        const tuple = filtered[mid];
-        if (new Date(tuple[field]).getTime() >= target) {
+        const row = data[mid];
+        const value = row[field];
+        if (value > targetValue) {
             end = mid - 1;
+        } else if (value < targetValue) {
+            start = mid + 1
         } else {
-            start = mid + 1;
+            end = mid - 1;
         }
     }
-    startIdx = end + 1;
-    const output = [];
-    for (let i = startIdx; i <= endIdx; i += 1) {
-        output.push(filtered[i]);
+    if (start < data.length && data[start][field] === targetValue) {
+        const output = [];
+        for (let i = start; i < data.length; i += 1) {
+            output.push(data[i]);
+        }
+        return output;
     }
-    return output;
+    if (start < data.length && end >= 0) {
+        const right = Math.abs(data[start][field] - targetValue);
+        const left = Math.abs(data[end][field] - targetValue);
+        if (left <= right) {
+            const output = [data[end]];
+            for (let i = end - 1; i >= 0; i -= 1) {
+                if (data[i][field] === data[end][field]) {
+                    output.push(data[i]);
+                }
+            }
+            return output;
+        }
+        const output = [data[start]];
+        for (let i = start + 1; i < data.length; i += 1) {
+            if (data[i][field] === data[start][field]) {
+                output.push(data[i]);
+            }
+        }
+        return output;
+    }
+    return [];
 }
 
 /**
@@ -263,7 +279,14 @@ export function bisectDataLeft(sortedData, field, target) {
  * @param {Array<Object>} data Array of objects to visualize.
  * @param {string} field Field to sort by.
  */
-export function sortByField(data, field) {
+export function sortByField(data, field, temporal = false) {
+    if (temporal) {
+        return data.filter(tuple => isDefined(tuple[field])).sort((a, b) => {
+            const x = new Date(a[field]).getTime(); 
+            const y = new Date(b[field]).getTime();
+            return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+        });
+    }
     return data.filter(tuple => isDefined(tuple[field])).sort((a, b) => {
         const x = a[field]; 
         const y = b[field];

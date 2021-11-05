@@ -30,7 +30,7 @@ export function LineChartView(params) {
     this._brushElem$ = undefined;
     this._brushPointsGroup$ = undefined;
     this._inactiveSeries = {};
-    this._sortedData = sortByField(this._data, this._viewConfig.channels['x']);
+    this._sortedData = sortByField(this._data, this._viewConfig.channels['x'], true);
     this._computedYAxisWidth = 0;
     this._render();
 }
@@ -38,7 +38,7 @@ export function LineChartView(params) {
 LineChartView.prototype.update = function (params) {
     if (isDefined(params.data)) {
         this._data = params.data;
-        this._sortedData = sortByField(this._data, this._viewConfig.channels['x']);
+        this._sortedData = sortByField(this._data, this._viewConfig.channels['x'], true);
     }
     if (isDefined(params.viewConfig)) {
         this._viewConfig = params.viewConfig;
@@ -130,8 +130,8 @@ LineChartView.prototype._createLineChartView = function (mount$) {
     const yBase = (0.2 * height);
     const series$ = createSVGElem('g', { class: 'bubbles-line-series' });
     const sortedData = this._data.filter(obj => isDefined(obj[xField])).sort(function(a, b) {
-        const x = a[xField]; 
-        const y = b[xField];
+        const x = new Date(a[xField]).getTime(); 
+        const y = new Date(b[xField]).getTime();
         return ((x < y) ? -1 : ((x > y) ? 1 : 0));
     });
     const points = [];
@@ -264,8 +264,8 @@ LineChartView.prototype._createLineSeries = function (mount$) {
     const yBase = (0.2 * height);
     const series$ = createSVGElem('g', { class: 'bubbles-line-series' });
     const sortedData = this._data.filter(obj => isDefined(obj[xField])).sort(function(a, b) {
-        const x = a[xField]; 
-        const y = b[xField];
+        const x = new Date(a[xField]).getTime(); 
+        const y = new Date(b[xField]).getTime();
         return ((x < y) ? -1 : ((x > y) ? 1 : 0));
     });
     for (let i = 0; i < seriesValues.length; i += 1) {
@@ -566,14 +566,14 @@ LineChartView.prototype._setupTooltip = function (mount$) {
         const baseX = point.x;
         const baseY = point.y;
         // subtract space used by y axis
-        let x = baseX - (this._computedYAxisWidth);
+        let x = baseX - this._computedYAxisWidth;
         const y = baseY;
         const tooltip = new Tooltip({
             xField,
             yField,
             series,
             width: (width - this._computedYAxisWidth) - 10,
-            data: this._data,
+            data: this._sortedData,
             inactiveSeries: this._inactiveSeries,
         });
         const tooltipObj = tooltip.getTooltipForCoords(x, y);

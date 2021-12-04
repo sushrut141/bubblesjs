@@ -1,0 +1,63 @@
+<html>
+<head>
+    <title>bubbles</title>
+    <style>
+        body {
+            background: #f8f8f8;
+            font-family: sans-serif;
+        }
+
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            width: 800px;
+        }
+
+        .table {
+            width: 600px;
+        }
+
+        .dashboard {
+            margin: 20px;
+        }
+
+        .row {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+        }
+
+        .column {
+            margin-left: 20px;
+        }
+
+        .column:first-child {
+            margin-left: 0;
+        }
+
+        .mean-kpi {
+            margin-left: 20px;
+        }
+
+        .offset {
+            margin-top: 57px;
+        }
+    </style>
+    <link rel="stylesheet" href="../dist/bubbles.css" >
+</head>
+<body>
+    <script src="../dist/bubbles.umd.js"></script>
+    <div class="dashboard">
+        <div class="filter-bar" id="filter-bar"></div>
+        <div class="row">
+            <div class="column linechart"></div>
+        </div>
+        <div>
+            <div class="column barchart"></div>
+        </div>
+    </div>
+    <!-- load the main data file as a global -->
+    <script src="data/afghan.js"></script>
+    <script src="scripts/afghan_charts.js"></script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+<html>
+<head>
+    <title>bubbles</title>
+    <style>
+        body {
+            background: #f8f8f8;
+        }
+
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            width: 800px;
+        }
+
+        .table {
+            width: 600px;
+        }
+
+        .dashboard {
+            margin: 20px;
+        }
+
+        .row {
+            display: flex;
+            align-items: flex-start;
+            margin: 20px 0;
+        }
+
+        .column {
+            margin-left: 20px;
+        }
+
+        .column:first-child {
+            margin-left: 0;
+        }
+
+        .mean-kpi {
+            margin-left: 20px;
+        }
+    </style>
+    <link rel="stylesheet" href="../dist/bubbles.css" >
+</head>
+<body>
+    <script src="../dist/bubbles.umd.js"></script>
+    <div class="dashboard">
+        <div class="filter-bar" id="filter-bar"></div>
+        <div class="row">
+            <div class="count-kpi"></div>
+            <div class="mean-kpi"></div>
+        </div>
+        <div class="row">
+            <div class="column table" id="table"></div>
+            <div class="column linechart" id="linechart"></div>
+        </div>
+        <div class="row">
+            <div class="column series-barchart" id="series-barchart"></div>
+            <div class="column barchart" id="barchart"></div>
+        </div>
+    </div>
+    <!-- load the main data file as a global -->
+    <script src="data/data.js"></script>
+    <script src="scripts/cars.js"></script>
+</body>
+</html>

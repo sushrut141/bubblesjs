@@ -1,0 +1,28 @@
+.bubbles.bubbles-bar-chart {
+    background: white;
+}
+
+.bubbles-chart-axis-title {
+    font-size: 12px;
+}
+
+.bubbles-barchart-band {
+    transition: opacity 0.3s ease;
+    opacity: 0;
+}
+
+.bubbles-barchart-band:hover {
+    opacity: 0.8;
+}
+
+.bubbles-series-legend-item {
+    cursor: pointer;
+}
+
+.bubbles-series-legend-item--inactive {
+    opacity: 0.7;
+}
+
+.bubbles-barchart-tooltip {
+
+}

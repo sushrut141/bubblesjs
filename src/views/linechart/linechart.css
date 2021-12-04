@@ -1,0 +1,9 @@
+.bubbles.bubbles-line-chart {
+    background: white;
+}
+
+.bubbles-series-legend-item--inactive {
+    opacity: 0.7;
+}
+.bubbles-linechart-tooltip {
+}

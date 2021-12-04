@@ -1,0 +1,73 @@
+.bubbles {
+    font-family: sans-serif;
+}
+
+.bubbles-selector {
+    margin: 4px 0;
+}
+
+/* bubbles button styles */
+.bubbles-button {
+    padding: 8px 16px;
+    background: white;
+    border: 1px solid #dcdcdc;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.bubbles-button--primary {
+    background: #0082ff;
+    border: 1px solid #0082ff;
+    color: white;
+}
+
+ /* bubbles drop down styles */
+.bubbles-dropdown {
+    border: 1px solid rgba(197, 197, 197, 0.7);
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 100px;
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.7);
+}
+
+.bubbles-dropdown.bubbles-dropdown--expanded {
+    position: relative;
+    box-shadow: none;
+    border: none;
+}
+
+.bubbles-dropdown::after {
+    display: inline-block;
+    width: 0;
+    height: 0;
+    margin-left: .5em;
+    vertical-align: .2em;
+    content: "";
+    border-top: .3em solid;
+    border-right: .3em solid transparent;
+    border-bottom: 0;
+    border-left: .3em solid transparent;
+}
+
+.bubbles-dropdown-list {
+    position: absolute;
+    max-height: 90px;
+    overflow: auto;
+    background: white;
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+}
+
+.bubbles-dropdown-item {
+    cursor: pointer;
+    padding: 8px;
+    min-width: 100px;
+}
+
+.bubbles-dropdown-item:hover {
+    background: #f8f8f8;
+}
